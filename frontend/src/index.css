@@ -1,0 +1,322 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =========================
+   GLOBAL STYLES
+========================= */
+
+body {
+
+  margin: 0;
+
+  font-family:
+    "Inter",
+    sans-serif;
+
+  background: #f1f5f9;
+
+  transition:
+    background 0.3s ease,
+    color 0.3s ease;
+
+}
+
+/* =========================
+   DARK MODE
+========================= */
+
+.dark body {
+
+  background:
+    #020617;
+
+  color: white;
+
+}
+
+/* =========================
+   SCROLLBAR
+========================= */
+
+::-webkit-scrollbar {
+
+  width: 10px;
+
+}
+
+::-webkit-scrollbar-track {
+
+  background:
+    #e2e8f0;
+
+}
+
+::-webkit-scrollbar-thumb {
+
+  background:
+    #94a3b8;
+
+  border-radius:
+    20px;
+
+}
+
+::-webkit-scrollbar-thumb:hover {
+
+  background:
+    #64748b;
+
+}
+
+/* DARK SCROLLBAR */
+
+.dark ::-webkit-scrollbar-track {
+
+  background:
+    #0f172a;
+
+}
+
+.dark ::-webkit-scrollbar-thumb {
+
+  background:
+    #334155;
+
+}
+
+/* =========================
+   ENTERPRISE CARD
+========================= */
+
+.enterprise-card {
+
+  @apply
+  bg-white
+  dark:bg-[#0f172a]
+  rounded-3xl
+  shadow-card
+  border
+  border-transparent
+  dark:border-slate-800
+  transition-all
+  duration-300
+  cursor-pointer;
+
+}
+
+/* HOVER EFFECT */
+
+.enterprise-card:hover {
+
+  transform:
+    translateY(-6px)
+    scale(1.03);
+
+  box-shadow:
+    0 25px 50px
+    rgba(59,130,246,0.15);
+
+  border:
+    1px solid
+    rgba(59,130,246,0.2);
+
+}
+
+/* =========================
+   BUTTON EFFECTS
+========================= */
+
+.btn-hover {
+
+  transition:
+    all 0.3s ease;
+
+}
+
+.btn-hover:hover {
+
+  transform:
+    scale(1.05);
+
+}
+
+/* =========================
+   INPUT STYLES
+========================= */
+
+.input-style {
+
+  @apply
+  w-full
+  px-5
+  py-4
+  rounded-2xl
+  border
+  border-gray-200
+  dark:border-slate-700
+  bg-white
+  dark:bg-[#0f172a]
+  text-slate-800
+  dark:text-white
+  outline-none
+  transition-all
+  duration-300;
+
+}
+
+.input-style:focus {
+
+  border:
+    1px solid #3b82f6;
+
+  box-shadow:
+    0 0 0 4px
+    rgba(59,130,246,0.15);
+
+}
+
+/* =========================
+   SIDEBAR ACTIVE GLOW
+========================= */
+
+.sidebar-active {
+
+  background:
+    rgba(37,99,235,0.15);
+
+  color:
+    #60a5fa;
+
+  border:
+    1px solid
+    rgba(59,130,246,0.25);
+
+  box-shadow:
+    0 10px 25px
+    rgba(59,130,246,0.15);
+
+}
+
+/* =========================
+   STATUS BADGES
+========================= */
+
+.status-pending {
+
+  @apply
+  bg-yellow-100
+  text-yellow-700
+  px-4
+  py-1
+  rounded-full
+  text-sm
+  font-semibold;
+
+}
+
+.status-progress {
+
+  @apply
+  bg-blue-100
+  text-blue-700
+  px-4
+  py-1
+  rounded-full
+  text-sm
+  font-semibold;
+
+}
+
+.status-completed {
+
+  @apply
+  bg-green-100
+  text-green-700
+  px-4
+  py-1
+  rounded-full
+  text-sm
+  font-semibold;
+
+}
+
+/* =========================
+   LOADING SKELETON
+========================= */
+
+.skeleton {
+
+  @apply
+  animate-pulse
+  rounded-2xl
+  bg-gray-200
+  dark:bg-slate-800;
+
+}
+
+/* =========================
+   TABLE HOVER
+========================= */
+
+.table-row-hover {
+
+  transition:
+    all 0.2s ease;
+
+}
+
+.table-row-hover:hover {
+
+  background:
+    rgba(59,130,246,0.06);
+
+}
+
+/* =========================
+   GRADIENT HEADER
+========================= */
+
+.gradient-header {
+
+  background:
+    linear-gradient(
+      to right,
+      #020617,
+      #0f172a
+    );
+
+}
+
+/* =========================
+   FADE ANIMATION
+========================= */
+
+.fade-in {
+
+  animation:
+    fadeIn 0.4s ease-in-out;
+
+}
+
+@keyframes fadeIn {
+
+  from {
+
+    opacity: 0;
+
+    transform:
+      translateY(10px);
+
+  }
+
+  to {
+
+    opacity: 1;
+
+    transform:
+      translateY(0);
+
+  }
+
+}
