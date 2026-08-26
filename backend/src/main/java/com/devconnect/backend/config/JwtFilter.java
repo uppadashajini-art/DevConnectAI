@@ -1,13 +1,22 @@
 package com.devconnect.backend.config;
 
+
+
 import com.devconnect.backend.entity.User;
+
 import com.devconnect.backend.repository.UserRepository;
 
+
+
 import jakarta.servlet.FilterChain;
+
 import jakarta.servlet.ServletException;
 
 import jakarta.servlet.http.HttpServletRequest;
+
 import jakarta.servlet.http.HttpServletResponse;
+
+
 
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -23,18 +32,28 @@ import org.springframework.stereotype.Component;
 
 import org.springframework.web.filter.OncePerRequestFilter;
 
+
+
 import java.io.IOException;
 
 import java.util.Collections;
 
+
+
 @Component
-public class JwtFilter
-        extends OncePerRequestFilter {
+
+public class JwtFilter extends OncePerRequestFilter {
+
+
 
     @Autowired
+
     private UserRepository userRepository;
 
+
+
     @Override
+
     protected void doFilterInternal(
 
             HttpServletRequest request,
@@ -45,128 +64,173 @@ public class JwtFilter
 
     ) throws ServletException, IOException {
 
+
+
         // =========================================
+
         // REQUEST PATH
-        // =========================================
-
-        String path =
-                request.getServletPath();
 
         // =========================================
+
+
+
+        String path = request.getServletPath();
+
+
+
+        // =========================================
+
         // ALLOW OPTIONS
+
         // =========================================
 
-        if (
 
-                request.getMethod()
-                        .equalsIgnoreCase("OPTIONS")
 
-        ) {
+        if (request.getMethod().equalsIgnoreCase("OPTIONS")) {
 
-            filterChain.doFilter(
-                    request,
-                    response
-            );
+            filterChain.doFilter(request, response);
 
             return;
+
         }
 
+
+
         // =========================================
+
         // PUBLIC ROUTES
+
         // =========================================
 
-        if (
 
-                path.equals("/api/auth/login")
 
-                        ||
+        if (path.equals("/api/auth/login")
 
-                        path.equals("/api/auth/register")
+                || path.equals("/api/auth/register")
 
-                        ||
+                || path.equals("/api/users")) {
 
-                        path.equals("/api/users")
 
-        ) {
 
-            filterChain.doFilter(
-                    request,
-                    response
-            );
+            filterChain.doFilter(request, response);
 
             return;
+
         }
 
+
+
         // =========================================
+
         // GET TOKEN
-        // =========================================
-
-        String authHeader =
-                request.getHeader("Authorization");
 
         // =========================================
+
+
+
+        String authHeader = request.getHeader("Authorization");
+
+
+
+        // =========================================
+
+        // DEBUG PRINTS
+
+        // =========================================
+
+
+
+        System.out.println("================================");
+
+        System.out.println("PATH: " + request.getServletPath());
+
+        System.out.println("AUTH HEADER: " + authHeader);
+
+
+
+        // =========================================
+
         // CHECK TOKEN
+
         // =========================================
 
-        if (
 
-                authHeader != null
 
-                        &&
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
-                        authHeader.startsWith("Bearer ")
 
-        ) {
 
-            String token =
-                    authHeader.substring(7);
+            String token = authHeader.substring(7);
+
+
 
             // =========================================
+
             // VALIDATE TOKEN
+
             // =========================================
 
-            boolean valid =
-                    JwtUtil.validateToken(token);
+
+
+            boolean valid = JwtUtil.validateToken(token);
+
+
 
             if (!valid) {
 
-                response.setStatus(
-                        HttpServletResponse.SC_UNAUTHORIZED
-                );
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 
-                response.getWriter().write(
-                        "Invalid JWT Token"
-                );
+                response.getWriter().write("Invalid JWT Token");
 
                 return;
+
             }
 
+
+
             // =========================================
+
             // EXTRACT EMAIL
-            // =========================================
-
-            String email =
-                    JwtUtil.extractEmail(token);
 
             // =========================================
+
+
+
+            String email = JwtUtil.extractEmail(token);
+
+
+
+            System.out.println("TOKEN EMAIL: " + email);
+
+
+
+            // =========================================
+
             // FIND USER
-            // =========================================
-
-            User user =
-
-                    userRepository
-                            .findByEmail(email)
-                            .orElse(null);
 
             // =========================================
+
+
+
+            User user = userRepository.findByEmail(email).orElse(null);
+
+
+
+            // =========================================
+
             // USER FOUND
+
             // =========================================
+
+
 
             if (user != null) {
 
-                String role =
-                        "ROLE_" +
-                                user.getRole();
+
+
+                String role = "ROLE_" + user.getRole();
+
+
 
                 UsernamePasswordAuthenticationToken authentication =
 
@@ -177,30 +241,59 @@ public class JwtFilter
                                 null,
 
                                 Collections.singletonList(
+
                                         new SimpleGrantedAuthority(role)
+
                                 )
+
                         );
+
+
 
                 authentication.setDetails(
 
                         new WebAuthenticationDetailsSource()
+
                                 .buildDetails(request)
 
                 );
 
+
+
                 SecurityContextHolder
+
                         .getContext()
+
                         .setAuthentication(authentication);
+
+
+
+                System.out.println("AUTHENTICATION SUCCESS");
+
+            } else {
+
+                System.out.println("USER NOT FOUND: " + email);
+
             }
+
+        } else {
+
+            System.out.println("NO JWT TOKEN FOUND");
+
         }
 
-        // =========================================
-        // CONTINUE REQUEST
+
+
         // =========================================
 
-        filterChain.doFilter(
-                request,
-                response
-        );
+        // CONTINUE REQUEST
+
+        // =========================================
+
+
+
+        filterChain.doFilter(request, response);
+
     }
+
 }

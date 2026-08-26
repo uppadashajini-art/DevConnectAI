@@ -1,21 +1,13 @@
 import {
-
   FaTachometerAlt,
-
   FaProjectDiagram,
-
   FaTasks,
-
   FaUser,
-
   FaUsers,
-
   FaBell,
-
   FaFileUpload,
-
   FaSignOutAlt,
-
+  FaRobot,
 } from "react-icons/fa";
 
 import {
@@ -86,6 +78,16 @@ function Sidebar() {
         "TEAM_MEMBER",
       ],
     },
+    {
+  name: "AI Assistant",
+  path: "/ai",
+  icon: <FaRobot />,
+  roles: [
+    "ADMIN",
+    "PROJECT_MANAGER",
+    "TEAM_MEMBER",
+  ],
+},
 
     // =========================
     // TEAM ACCESS
