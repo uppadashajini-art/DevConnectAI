@@ -55,7 +55,7 @@ function EditTask() {
 
       const response =
         await axios.get(
-          `http://localhost:8080/api/tasks/${id}`
+          `/api/tasks/${id}`
         );
 
       setTitle(
@@ -97,7 +97,7 @@ function EditTask() {
       ) {
 
         await axios.put(
-          `http://localhost:8080/api/tasks/${id}`,
+          `/api/tasks/${id}`,
           {
             status,
           }
@@ -107,7 +107,7 @@ function EditTask() {
 
         // ADMIN + PROJECT MANAGER
         await axios.put(
-          `http://localhost:8080/api/tasks/${id}`,
+          `/api/tasks/${id}`,
           {
             title,
             description,

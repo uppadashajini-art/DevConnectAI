@@ -53,7 +53,7 @@ function EditProject() {
 
       const response =
         await axios.get(
-          `http://localhost:8080/api/projects/${id}`
+          `/api/projects/${id}`
         );
 
       setTitle(
@@ -85,7 +85,7 @@ function EditProject() {
       setLoading(true);
 
       await axios.put(
-        `http://localhost:8080/api/projects/${id}`,
+        `/api/projects/${id}`,
         {
           title,
           description,

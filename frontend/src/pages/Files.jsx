@@ -291,7 +291,7 @@ function Files() {
 
                     {/* VIEW */}
                     <a
-                      href={`http://localhost:8080/api/files/view/${uploadedFile.id}`}
+                      href={`/api/files/view/${uploadedFile.id}`}
                       target="_blank"
                       rel="noreferrer"
                       className="flex-1 bg-green-500 hover:bg-green-600 text-white py-3 rounded-2xl flex items-center justify-center gap-2 transition font-semibold"
