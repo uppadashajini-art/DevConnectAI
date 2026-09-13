@@ -1,4 +1,6 @@
+
 import {
+  useCallback,
   useEffect,
   useState,
 } from "react";
@@ -18,16 +20,13 @@ import {
   FaCalendarAlt,
   FaUser,
   FaSearch,
-  FaFolderOpen,
   FaCheckCircle,
-  FaClock,
   FaSpinner,
 } from "react-icons/fa";
 
 import MainLayout from "../layouts/MainLayout";
 
 function Tasks() {
-
   // =========================================
   // STATES
   // =========================================
@@ -40,9 +39,6 @@ function Tasks() {
 
   const [search, setSearch] =
     useState("");
-
-  const [loading, setLoading] =
-    useState(true);
 
   const navigate =
     useNavigate();
@@ -58,25 +54,13 @@ function Tasks() {
     localStorage.getItem("email");
 
   // =========================================
-  // FETCH TASKS
-  // =========================================
-
-  useEffect(() => {
-
-    fetchTasks();
-
-  }, []);
-
-  // =========================================
   // FETCH TASKS FUNCTION
   // =========================================
 
   const fetchTasks =
-    async () => {
+    useCallback(async () => {
 
       try {
-
-        setLoading(true);
 
         // =========================================
         // ADMIN & PROJECT_MANAGER
@@ -84,11 +68,8 @@ function Tasks() {
         // =========================================
 
         if (
-
           role === "ADMIN" ||
-
           role === "PROJECT_MANAGER"
-
         ) {
 
           const response =
@@ -117,7 +98,6 @@ function Tasks() {
           const userTasks =
             response.data.filter(
               (task) =>
-
                 task.assignedTo ===
                 email
             );
@@ -136,13 +116,19 @@ function Tasks() {
           "Failed to Fetch Tasks"
         );
 
-      } finally {
-
-        setLoading(false);
-
       }
 
-    };
+    }, [role, email]);
+
+  // =========================================
+  // FETCH TASKS
+  // =========================================
+
+  useEffect(() => {
+
+    fetchTasks();
+
+  }, [fetchTasks]);
 
   // =========================================
   // DELETE TASK
@@ -177,12 +163,11 @@ function Tasks() {
         );
 
         setTasks(
-
-          tasks.filter(
-            (task) =>
-              task.id !== id
-          )
-
+          (prev) =>
+            prev.filter(
+              (task) =>
+                task.id !== id
+            )
         );
 
         toast.success(
@@ -235,10 +220,8 @@ function Tasks() {
         task.status === filter;
 
       return (
-
         matchesSearch &&
         matchesFilter
-
       );
 
     });
@@ -279,6 +262,7 @@ function Tasks() {
             bg-gray-100
             text-gray-700
           `;
+
       }
 
     };
@@ -301,40 +285,50 @@ function Tasks() {
         "In Progress"
     ).length;
 
+  // =========================================
+  // UI
+  // =========================================
+
   return (
 
     <MainLayout>
 
       {/* HEADER */}
 
-      <div className="
+      <div
+        className="
         flex
         flex-col
         xl:flex-row
         justify-between
         gap-8
         mb-10
-      ">
+      "
+      >
 
         <div>
 
-          <h1 className="
+          <h1
+            className="
             text-5xl
             font-bold
             text-slate-900
             dark:text-white
-          ">
+          "
+          >
 
             Tasks
 
           </h1>
 
-          <p className="
+          <p
+            className="
             text-gray-500
             dark:text-gray-400
             mt-3
             text-lg
-          ">
+          "
+          >
 
             Track and manage workflow efficiently
 
@@ -384,7 +378,8 @@ function Tasks() {
       {
         role === "TEAM_MEMBER" && (
 
-          <div className="
+          <div
+            className="
             bg-yellow-100
             border
             border-yellow-300
@@ -392,7 +387,8 @@ function Tasks() {
             p-5
             rounded-2xl
             mb-8
-          ">
+          "
+          >
 
             You can only view and update
             tasks assigned to you.
@@ -404,17 +400,27 @@ function Tasks() {
 
       {/* ANALYTICS */}
 
-      <div className="
+      <div
+        className="
         grid
         grid-cols-1
         md:grid-cols-3
         gap-8
         mb-10
-      ">
+      "
+      >
 
-        <div className="enterprise-card p-8">
+        {/* TOTAL TASKS */}
 
-          <div className="
+        <div
+          className="
+          enterprise-card
+          p-8
+        "
+        >
+
+          <div
+            className="
             bg-blue-100
             w-20
             h-20
@@ -423,29 +429,36 @@ function Tasks() {
             items-center
             justify-center
             mb-6
-          ">
+          "
+          >
 
-            <FaTasks className="
+            <FaTasks
+              className="
               text-blue-600
               text-4xl
-            " />
+            "
+            />
 
           </div>
 
-          <h2 className="
+          <h2
+            className="
             text-5xl
             font-bold
-          ">
+          "
+          >
 
             {tasks.length}
 
           </h2>
 
-          <p className="
+          <p
+            className="
             text-gray-500
             mt-3
             text-lg
-          ">
+          "
+          >
 
             Total Tasks
 
@@ -453,9 +466,17 @@ function Tasks() {
 
         </div>
 
-        <div className="enterprise-card p-8">
+        {/* IN PROGRESS */}
 
-          <div className="
+        <div
+          className="
+          enterprise-card
+          p-8
+        "
+        >
+
+          <div
+            className="
             bg-yellow-100
             w-20
             h-20
@@ -464,29 +485,36 @@ function Tasks() {
             items-center
             justify-center
             mb-6
-          ">
+          "
+          >
 
-            <FaSpinner className="
+            <FaSpinner
+              className="
               text-yellow-600
               text-4xl
-            " />
+            "
+            />
 
           </div>
 
-          <h2 className="
+          <h2
+            className="
             text-5xl
             font-bold
-          ">
+          "
+          >
 
             {inProgressTasks}
 
           </h2>
 
-          <p className="
+          <p
+            className="
             text-gray-500
             mt-3
             text-lg
-          ">
+          "
+          >
 
             In Progress
 
@@ -494,9 +522,17 @@ function Tasks() {
 
         </div>
 
-        <div className="enterprise-card p-8">
+        {/* COMPLETED TASKS */}
 
-          <div className="
+        <div
+          className="
+          enterprise-card
+          p-8
+        "
+        >
+
+          <div
+            className="
             bg-green-100
             w-20
             h-20
@@ -505,29 +541,36 @@ function Tasks() {
             items-center
             justify-center
             mb-6
-          ">
+          "
+          >
 
-            <FaCheckCircle className="
+            <FaCheckCircle
+              className="
               text-green-600
               text-4xl
-            " />
+            "
+            />
 
           </div>
 
-          <h2 className="
+          <h2
+            className="
             text-5xl
             font-bold
-          ">
+          "
+          >
 
             {completedTasks}
 
           </h2>
 
-          <p className="
+          <p
+            className="
             text-gray-500
             mt-3
             text-lg
-          ">
+          "
+          >
 
             Completed Tasks
 
@@ -539,19 +582,23 @@ function Tasks() {
 
       {/* SEARCH */}
 
-      <div className="
+      <div
+        className="
         mb-8
         relative
         w-full
         md:w-[450px]
-      ">
+      "
+      >
 
-        <FaSearch className="
+        <FaSearch
+          className="
           absolute
           left-4
           top-5
           text-gray-400
-        " />
+        "
+        />
 
         <input
           type="text"
@@ -579,12 +626,14 @@ function Tasks() {
 
       {/* FILTERS */}
 
-      <div className="
+      <div
+        className="
         flex
         flex-wrap
         gap-4
         mb-10
-      ">
+      "
+      >
 
         {[
           "All",
@@ -624,50 +673,66 @@ function Tasks() {
 
       {/* TASK CARDS */}
 
-      <div className="
+      <div
+        className="
         grid
         grid-cols-1
         md:grid-cols-2
         xl:grid-cols-3
         gap-8
-      ">
+      "
+      >
 
         {filteredTasks.map((task) => (
 
           <motion.div
             key={task.id}
-            whileHover={{ y: -5 }}
+            whileHover={{
+              y: -5,
+            }}
             className="
               enterprise-card
               p-7
             "
           >
 
-            <h2 className="
+            {/* TITLE */}
+
+            <h2
+              className="
               text-2xl
               font-bold
               mb-4
-            ">
+            "
+            >
 
               {task.title}
 
             </h2>
 
-            <p className="
+            {/* DESCRIPTION */}
+
+            <p
+              className="
               text-gray-500
               mb-4
-            ">
+            "
+            >
 
               {task.description}
 
             </p>
 
-            <div className="
+            {/* ASSIGNED USER */}
+
+            <div
+              className="
               flex
               items-center
               gap-2
               mb-3
-            ">
+            "
+            >
 
               <FaUser />
 
@@ -675,18 +740,24 @@ function Tasks() {
 
             </div>
 
-            <div className="
+            {/* DUE DATE */}
+
+            <div
+              className="
               flex
               items-center
               gap-2
               mb-3
-            ">
+            "
+            >
 
               <FaCalendarAlt />
 
               {task.dueDate}
 
             </div>
+
+            {/* STATUS */}
 
             <span
               className={`
@@ -695,7 +766,9 @@ function Tasks() {
                 rounded-full
                 text-sm
                 font-semibold
-                ${getStatusStyle(task.status)}
+                ${getStatusStyle(
+                  task.status
+                )}
               `}
             >
 
@@ -703,11 +776,17 @@ function Tasks() {
 
             </span>
 
-            <div className="
+            {/* ACTIONS */}
+
+            <div
+              className="
               flex
               gap-3
               mt-6
-            ">
+            "
+            >
+
+              {/* EDIT */}
 
               <button
                 onClick={() =>
@@ -729,12 +808,16 @@ function Tasks() {
 
               </button>
 
+              {/* DELETE */}
+
               {
                 role === "ADMIN" && (
 
                   <button
                     onClick={() =>
-                      deleteTask(task.id)
+                      deleteTask(
+                        task.id
+                      )
                     }
                     className="
                       bg-red-500

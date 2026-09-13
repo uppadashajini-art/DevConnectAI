@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import axios from "../utils/axiosConfig";
 
@@ -17,95 +17,80 @@ import {
 import MainLayout from "../layouts/MainLayout";
 
 function EditTask() {
-
   const { id } = useParams();
 
   const navigate = useNavigate();
 
   // GET ROLE
-  const role =
-    localStorage.getItem("role");
+  const role = localStorage.getItem("role");
 
   // STATES
-  const [title, setTitle] =
-    useState("");
+  const [title, setTitle] = useState("");
 
   const [description, setDescription] =
     useState("");
 
-  const [status, setStatus] =
-    useState("");
+  const [status, setStatus] = useState("");
 
-  const [dueDate, setDueDate] =
-    useState("");
+  const [dueDate, setDueDate] = useState("");
 
-  const [loading, setLoading] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
 
+  // =========================================
   // FETCH TASK
-  useEffect(() => {
+  // =========================================
 
-    fetchTask();
-
-  }, [id]);
-
-  const fetchTask = async () => {
-
+  const fetchTask = useCallback(async () => {
     try {
-
-      const response =
-        await axios.get(
-          `/api/tasks/${id}`
-        );
-
-      setTitle(
-        response.data.title
+      const response = await axios.get(
+        `/api/tasks/${id}`
       );
+
+      setTitle(response.data.title);
 
       setDescription(
         response.data.description
       );
 
-      setStatus(
-        response.data.status
-      );
+      setStatus(response.data.status);
 
-      setDueDate(
-        response.data.dueDate
-      );
-
+      setDueDate(response.data.dueDate);
     } catch (error) {
-
       console.log(error);
-
     }
-  };
+  }, [id]);
 
+  // =========================================
+  // LOAD TASK
+  // =========================================
+
+  useEffect(() => {
+    fetchTask();
+  }, [fetchTask]);
+
+  // =========================================
   // UPDATE TASK
-  const handleUpdate = async (e) => {
+  // =========================================
 
+  const handleUpdate = async (e) => {
     e.preventDefault();
 
     try {
-
       setLoading(true);
 
       // TEAM MEMBER
       // ONLY STATUS UPDATE
-      if (
-        role === "TEAM_MEMBER"
-      ) {
 
+      if (role === "TEAM_MEMBER") {
         await axios.put(
           `/api/tasks/${id}`,
           {
             status,
           }
         );
-
       } else {
-
         // ADMIN + PROJECT MANAGER
+
         await axios.put(
           `/api/tasks/${id}`,
           {
@@ -122,24 +107,18 @@ function EditTask() {
       );
 
       navigate("/tasks");
-
     } catch (error) {
-
       console.log(error);
 
       alert(
         "Error updating task"
       );
-
     } finally {
-
       setLoading(false);
-
     }
   };
 
   return (
-
     <MainLayout>
 
       <div className="flex justify-center items-center py-10">
@@ -150,6 +129,7 @@ function EditTask() {
         >
 
           {/* HEADER */}
+
           <div className="flex items-center gap-4 mb-10">
 
             <div className="bg-yellow-100 text-yellow-600 p-5 rounded-3xl">
@@ -166,11 +146,9 @@ function EditTask() {
 
               <p className="text-gray-500 mt-2 text-lg">
 
-                {
-                  role === "TEAM_MEMBER"
-                    ? "Update your task status"
-                    : "Manage and update task details"
-                }
+                {role === "TEAM_MEMBER"
+                  ? "Update your task status"
+                  : "Manage and update task details"}
 
               </p>
 
@@ -179,12 +157,11 @@ function EditTask() {
           </div>
 
           {/* TITLE */}
+
           <div className="mb-6">
 
             <label className="block mb-3 font-semibold text-slate-700">
-
               Task Title
-
             </label>
 
             <div className="relative">
@@ -213,12 +190,11 @@ function EditTask() {
           </div>
 
           {/* DESCRIPTION */}
+
           <div className="mb-6">
 
             <label className="block mb-3 font-semibold text-slate-700">
-
               Description
-
             </label>
 
             <div className="relative">
@@ -229,7 +205,9 @@ function EditTask() {
                 placeholder="Task Description"
                 value={description}
                 onChange={(e) =>
-                  setDescription(e.target.value)
+                  setDescription(
+                    e.target.value
+                  )
                 }
                 rows="5"
                 disabled={
@@ -247,12 +225,11 @@ function EditTask() {
           </div>
 
           {/* STATUS */}
+
           <div className="mb-6">
 
             <label className="block mb-3 font-semibold text-slate-700">
-
               Status
-
             </label>
 
             <select
@@ -285,12 +262,11 @@ function EditTask() {
           </div>
 
           {/* DUE DATE */}
+
           <div className="mb-8">
 
             <label className="block mb-3 font-semibold text-slate-700">
-
               Due Date
-
             </label>
 
             <div className="relative">
@@ -301,7 +277,9 @@ function EditTask() {
                 type="date"
                 value={dueDate}
                 onChange={(e) =>
-                  setDueDate(e.target.value)
+                  setDueDate(
+                    e.target.value
+                  )
                 }
                 disabled={
                   role === "TEAM_MEMBER"
@@ -318,19 +296,18 @@ function EditTask() {
           </div>
 
           {/* BUTTON */}
+
           <button
             type="submit"
             disabled={loading}
             className="w-full bg-yellow-500 hover:bg-yellow-600 disabled:bg-yellow-300 text-white py-4 rounded-2xl text-lg font-semibold shadow-lg transition"
           >
 
-            {
-              loading
-                ? "Updating Task..."
-                : role === "TEAM_MEMBER"
-                ? "Update Status"
-                : "Update Task"
-            }
+            {loading
+              ? "Updating Task..."
+              : role === "TEAM_MEMBER"
+              ? "Update Status"
+              : "Update Task"}
 
           </button>
 
