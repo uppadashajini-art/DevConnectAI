@@ -19,16 +19,15 @@ public class CorsConfig {
                 registry.addMapping("/**")
 
                         .allowedOrigins(
-                                // Local development
-                                "http://localhost:3000",
-                                "http://localhost:5173",
+        "http://localhost:3000",
+        "http://localhost:5173",
 
-                                // Vercel production frontend
-                                "https://dev-connect-ai-beta.vercel.app",
+        "https://dev-connect-ai-beta.vercel.app",
 
-                                // Current Vercel deployment
-                                "https://dev-connect-2ray6n3al-uppadashajini-5916s-projects.vercel.app"
-                        )
+        "https://dev-connect-2ray6n3al-uppadashajini-5916s-projects.vercel.app",
+
+        "https://dev-connect-hsjj068ox-uppadashajini-5916s-projects.vercel.app"
+)
 
                         .allowedMethods(
                                 "GET",
