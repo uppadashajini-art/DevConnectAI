@@ -11,10 +11,8 @@ import axios from "axios";
 // VITE_API_URL=https://devconnectai.onrender.com/api
 
 const API_URL =
-  import.meta.env.VITE_API_URL ||
+  process.env.REACT_APP_API_URL ||
   "http://localhost:8080/api";
-  console.log("VITE_API_URL:", import.meta.env.VITE_API_URL);
-console.log("FINAL API_URL:", API_URL);
 
 // ===============================
 // AXIOS INSTANCE
