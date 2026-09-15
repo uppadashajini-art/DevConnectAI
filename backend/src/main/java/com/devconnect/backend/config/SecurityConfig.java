@@ -1,4 +1,3 @@
-
 package com.devconnect.backend.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,18 +21,24 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-                // Disable CSRF because this is a stateless REST API
                 .csrf(csrf -> csrf.disable())
 
-                // Enable CORS using CorsConfig.java
                 .cors(Customizer.withDefaults())
 
-                // JWT authentication is stateless
                 .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                        session.sessionCreationPolicy(
+                                SessionCreationPolicy.STATELESS
+                        )
+                )
 
-                // API authorization rules
                 .authorizeHttpRequests(auth -> auth
+
+                        // Allow CORS preflight requests
+                        .requestMatchers(
+                                org.springframework.http.HttpMethod.OPTIONS,
+                                "/**"
+                        )
+                        .permitAll()
 
                         // Authentication APIs do not require JWT
                         .requestMatchers("/api/auth/**")
@@ -48,19 +53,15 @@ public class SecurityConfig {
                         .authenticated()
                 )
 
-                // JWT filter runs before Spring's username/password filter
                 .addFilterBefore(
                         jwtFilter,
                         UsernamePasswordAuthenticationFilter.class
                 )
 
-                // Disable default login form
                 .formLogin(form -> form.disable())
 
-                // Disable HTTP Basic authentication
                 .httpBasic(basic -> basic.disable());
 
         return http.build();
     }
 }
-
