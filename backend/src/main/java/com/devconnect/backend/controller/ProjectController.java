@@ -32,10 +32,12 @@ public class ProjectController {
     // ADMIN & PROJECT_MANAGER
     // =========================================
     @GetMapping
-    public List<Project> getAllProjects() {
+public List<Project> getAllProjects() {
 
-        return service.getAllProjects();
-    }
+    System.out.println("🔥🔥 PROJECT CONTROLLER REACHED 🔥🔥");
+
+    return service.getAllProjects();
+}
 
     // =========================================
     // GET PROJECTS BY USER EMAIL
