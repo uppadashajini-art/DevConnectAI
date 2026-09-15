@@ -18,16 +18,12 @@ public class CorsConfig {
 
                 registry.addMapping("/**")
 
-                        .allowedOrigins(
-        "http://localhost:3000",
-        "http://localhost:5173",
-
-        "https://dev-connect-ai-beta.vercel.app",
-
-        "https://dev-connect-2ray6n3al-uppadashajini-5916s-projects.vercel.app",
-
-        "https://dev-connect-hsjj068ox-uppadashajini-5916s-projects.vercel.app"
-)
+                        .allowedOriginPatterns(
+                                "http://localhost:3000",
+                                "http://localhost:5173",
+                                "https://dev-connect-ai-beta.vercel.app",
+                                "https://*.vercel.app"
+                        )
 
                         .allowedMethods(
                                 "GET",
