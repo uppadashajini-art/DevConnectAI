@@ -1,4 +1,3 @@
-
 package com.devconnect.backend.config;
 
 import org.springframework.context.annotation.Bean;
@@ -28,7 +27,7 @@ public class CorsConfig {
                                 "https://dev-connect-ai-beta.vercel.app",
 
                                 // Current Vercel deployment
-                                "https://dev-connect-ndl2enj2a-uppadashajini-5916s-projects.vercel.app"
+                                "https://dev-connect-2ray6n3al-uppadashajini-5916s-projects.vercel.app"
                         )
 
                         .allowedMethods(
@@ -46,4 +45,3 @@ public class CorsConfig {
         };
     }
 }
-
