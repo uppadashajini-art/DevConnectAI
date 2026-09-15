@@ -38,12 +38,13 @@ axiosInstance.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
-    // DEBUG
     console.log("================================");
-    console.log("REQUEST SENT");
-    console.log("Method:", config.method?.toUpperCase());
-    console.log("URL:", `${config.baseURL}${config.url}`);
-    console.log("================================");
+console.log("REQUEST SENT");
+console.log("Method:", config.method?.toUpperCase());
+console.log("URL:", `${config.baseURL}${config.url}`);
+console.log("TOKEN:", token);
+console.log("AUTH HEADER:", config.headers?.Authorization);
+console.log("================================");
 
     return config;
   },
