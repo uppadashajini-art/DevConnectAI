@@ -50,8 +50,8 @@ function Projects() {
       // =========================================
       if (role === "ADMIN" || role === "PROJECT_MANAGER") {
         const [projectResponse, taskResponse] = await Promise.all([
-          axios.get("/api/projects"),
-          axios.get("/api/tasks"),
+          axios.get("/projects"),
+          axios.get("/tasks"),
         ]);
 
         setProjects(projectResponse.data || []);

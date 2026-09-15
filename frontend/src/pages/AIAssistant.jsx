@@ -15,7 +15,7 @@ function AIAssistant() {
     setLoading(true);
 
     try {
-      const res = await axios.post("/api/ai/generate-tasks", {
+      const res = await axios.post("/ai/generate-tasks", {
         projectDescription: description,
       });
 

@@ -165,7 +165,7 @@ function CreateProject() {
 
       // API CALL
       await axios.post(
-        "/api/projects",
+        "/projects",
         updatedProject
       );
 

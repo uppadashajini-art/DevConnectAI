@@ -54,7 +54,7 @@ function Team() {
 
       const response =
         await axios.get(
-          "/api/team"
+          "/team"
         );
 
       setMembers(response.data);
@@ -165,7 +165,7 @@ function Team() {
 
         // ADD
         await axios.post(
-          "/api/team",
+          "/team",
           team
         );
 

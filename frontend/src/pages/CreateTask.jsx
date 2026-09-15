@@ -92,7 +92,7 @@ function CreateTask() {
 
         const response =
           await axios.get(
-            "/api/projects"
+            "/projects"
           );
 
         setProjects(
@@ -118,7 +118,7 @@ function CreateTask() {
 
         const response =
           await axios.get(
-            "/api/users"
+            "/users"
           );
 
         console.log(
@@ -198,7 +198,7 @@ function CreateTask() {
 
         await axios.post(
 
-          "/api/tasks",
+          "/tasks",
 
           updatedTask
 

@@ -65,11 +65,11 @@ function Dashboard() {
         role === "PROJECT_MANAGER"
       ) {
         projectResponse = await axios.get(
-          "/api/projects"
+          "/projects"
         );
 
         taskResponse = await axios.get(
-          "/api/tasks"
+          "/tasks"
         );
       }
 
@@ -88,11 +88,11 @@ function Dashboard() {
       }
 
       const teamResponse = await axios.get(
-        "/api/team"
+        "/team"
       );
 
       const activityResponse = await axios.get(
-        "/api/activities"
+        "/activities"
       );
 
       let projects = projectResponse.data || [];

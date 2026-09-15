@@ -74,7 +74,7 @@ function Tasks() {
 
           const response =
             await axios.get(
-              "/api/tasks"
+              "/tasks"
             );
 
           setTasks(
@@ -92,7 +92,7 @@ function Tasks() {
 
           const response =
             await axios.get(
-              "/api/tasks"
+              "/tasks"
             );
 
           const userTasks =

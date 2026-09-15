@@ -39,7 +39,7 @@ function Files() {
     try {
 
       const response =
-        await axios.get("/api/files");
+        await axios.get("/files");
 
       setFiles(response.data);
 
@@ -69,7 +69,7 @@ function Files() {
       setUploading(true);
 
       await axios.post(
-        "/api/files/upload",
+        "/files/upload",
         formData,
         {
           headers: {

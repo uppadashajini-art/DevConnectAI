@@ -45,7 +45,7 @@ function Notifications() {
 
         const response =
           await axios.get(
-            "/api/notifications"
+            "/notifications"
           );
 
         // NEWEST FIRST
