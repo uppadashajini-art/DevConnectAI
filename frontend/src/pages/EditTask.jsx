@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect, useState } from "react";
 
 import axios from "../utils/axiosConfig";
@@ -16,15 +17,27 @@ import {
 
 import MainLayout from "../layouts/MainLayout";
 
+
 function EditTask() {
+
   const { id } = useParams();
 
   const navigate = useNavigate();
 
-  // GET ROLE
-  const role = localStorage.getItem("role");
+  // =========================================
+  // GET USER ROLE
+  // =========================================
 
+  const storedRole = localStorage.getItem("role");
+
+  const role = storedRole
+    ? storedRole.trim().toUpperCase()
+    : "";
+
+  // =========================================
   // STATES
+  // =========================================
+
   const [title, setTitle] = useState("");
 
   const [description, setDescription] =
@@ -36,89 +49,332 @@ function EditTask() {
 
   const [loading, setLoading] = useState(false);
 
+  const [fetching, setFetching] = useState(true);
+
+  const [error, setError] = useState("");
+
   // =========================================
-  // FETCH TASK
+  // FETCH EXISTING TASK
   // =========================================
 
   const fetchTask = useCallback(async () => {
+
     try {
-      const response = await axios.get(
-        `/api/tasks/${id}`
+
+      setFetching(true);
+
+      setError("");
+
+      console.log(
+        "Fetching task with ID:",
+        id
       );
 
-      setTitle(response.data.title);
+      // IMPORTANT:
+      // axios baseURL already contains /api
+      //
+      // baseURL:
+      // https://devconnectai.onrender.com/api
+      //
+      // Final URL:
+      // https://devconnectai.onrender.com/api/tasks/1
+
+      const response = await axios.get(
+        `/tasks/${id}`
+      );
+
+      console.log(
+        "Task data received:",
+        response.data
+      );
+
+      const task = response.data;
+
+      // =====================================
+      // PUT EXISTING DATA INTO FORM
+      // =====================================
+
+      setTitle(task.title || "");
 
       setDescription(
-        response.data.description
+        task.description || ""
       );
 
-      setStatus(response.data.status);
+      setStatus(
+        task.status || "Pending"
+      );
 
-      setDueDate(response.data.dueDate);
+      setDueDate(
+        task.dueDate || ""
+      );
+
     } catch (error) {
-      console.log(error);
+
+      console.error(
+        "FETCH TASK ERROR:",
+        error
+      );
+
+      console.error(
+        "STATUS:",
+        error.response?.status
+      );
+
+      if (
+        error.response?.status === 404
+      ) {
+
+        setError(
+          "Task not found."
+        );
+
+      } else if (
+        error.response?.status === 403
+      ) {
+
+        setError(
+          "You are not authorized to view this task."
+        );
+
+      } else {
+
+        setError(
+          "Failed to load task."
+        );
+      }
+
+    } finally {
+
+      setFetching(false);
+
     }
+
   }, [id]);
 
+
   // =========================================
-  // LOAD TASK
+  // LOAD TASK WHEN PAGE OPENS
   // =========================================
 
   useEffect(() => {
+
     fetchTask();
+
   }, [fetchTask]);
+
 
   // =========================================
   // UPDATE TASK
   // =========================================
 
   const handleUpdate = async (e) => {
+
     e.preventDefault();
 
     try {
+
       setLoading(true);
 
+      setError("");
+
+      // =====================================
       // TEAM MEMBER
-      // ONLY STATUS UPDATE
+      // ONLY STATUS CAN BE UPDATED
+      // =====================================
 
       if (role === "TEAM_MEMBER") {
-        await axios.put(
-          `/api/tasks/${id}`,
-          {
-            status,
-          }
+
+        const updateData = {
+          status: status,
+        };
+
+        console.log(
+          "Updating task status:",
+          updateData
         );
-      } else {
-        // ADMIN + PROJECT MANAGER
 
         await axios.put(
-          `/api/tasks/${id}`,
-          {
-            title,
-            description,
-            status,
-            dueDate,
-          }
+          `/tasks/${id}`,
+          updateData
+        );
+
+      }
+
+      // =====================================
+      // ADMIN / PROJECT MANAGER
+      // FULL TASK UPDATE
+      // =====================================
+
+      else {
+
+        const updateData = {
+
+          title: title.trim(),
+
+          description:
+            description.trim(),
+
+          status: status,
+
+          dueDate: dueDate,
+
+        };
+
+        console.log(
+          "Updating complete task:",
+          updateData
+        );
+
+        await axios.put(
+          `/tasks/${id}`,
+          updateData
         );
       }
+
+      // =====================================
+      // SUCCESS
+      // =====================================
 
       alert(
         "Task Updated Successfully"
       );
 
       navigate("/tasks");
-    } catch (error) {
-      console.log(error);
 
-      alert(
-        "Error updating task"
+    } catch (error) {
+
+      console.error(
+        "UPDATE TASK ERROR:",
+        error
       );
+
+      console.error(
+        "STATUS:",
+        error.response?.status
+      );
+
+      console.error(
+        "DATA:",
+        error.response?.data
+      );
+
+      if (
+        error.response?.status === 403
+      ) {
+
+        alert(
+          "Access Denied. You are not authorized to update this task."
+        );
+
+      } else if (
+        error.response?.status === 404
+      ) {
+
+        alert(
+          "Task not found."
+        );
+
+      } else {
+
+        alert(
+          "Error updating task."
+        );
+      }
+
     } finally {
+
       setLoading(false);
+
     }
   };
 
+
+  // =========================================
+  // LOADING SCREEN
+  // =========================================
+
+  if (fetching) {
+
+    return (
+
+      <MainLayout>
+
+        <div className="flex justify-center items-center py-20">
+
+          <div className="text-center">
+
+            <div className="text-2xl font-semibold text-slate-700">
+
+              Loading Task...
+
+            </div>
+
+            <p className="text-gray-500 mt-2">
+
+              Please wait while we fetch the task details.
+
+            </p>
+
+          </div>
+
+        </div>
+
+      </MainLayout>
+    );
+  }
+
+
+  // =========================================
+  // ERROR SCREEN
+  // =========================================
+
+  if (error) {
+
+    return (
+
+      <MainLayout>
+
+        <div className="flex justify-center items-center py-20">
+
+          <div className="bg-white rounded-3xl shadow-xl p-10 text-center max-w-lg w-full">
+
+            <h2 className="text-2xl font-bold text-red-600 mb-4">
+
+              Unable to Load Task
+
+            </h2>
+
+            <p className="text-gray-600 mb-6">
+
+              {error}
+
+            </p>
+
+            <button
+              type="button"
+              onClick={() => navigate("/tasks")}
+              className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-xl font-semibold"
+            >
+
+              Back to Tasks
+
+            </button>
+
+          </div>
+
+        </div>
+
+      </MainLayout>
+    );
+  }
+
+
+  // =========================================
+  // MAIN UI
+  // =========================================
+
   return (
+
     <MainLayout>
 
       <div className="flex justify-center items-center py-10">
@@ -128,7 +384,9 @@ function EditTask() {
           className="bg-white rounded-3xl shadow-xl border border-gray-100 p-10 w-full max-w-2xl"
         >
 
+          {/* ================================= */}
           {/* HEADER */}
+          {/* ================================= */}
 
           <div className="flex items-center gap-4 mb-10">
 
@@ -141,7 +399,9 @@ function EditTask() {
             <div>
 
               <h1 className="text-5xl font-bold text-slate-900">
+
                 Edit Task
+
               </h1>
 
               <p className="text-gray-500 mt-2 text-lg">
@@ -156,12 +416,17 @@ function EditTask() {
 
           </div>
 
-          {/* TITLE */}
+
+          {/* ================================= */}
+          {/* TASK TITLE */}
+          {/* ================================= */}
 
           <div className="mb-6">
 
             <label className="block mb-3 font-semibold text-slate-700">
+
               Task Title
+
             </label>
 
             <div className="relative">
@@ -178,6 +443,7 @@ function EditTask() {
                 disabled={
                   role === "TEAM_MEMBER"
                 }
+                required
                 className={`w-full border border-gray-200 pl-12 p-4 rounded-2xl focus:outline-none focus:ring-2 ${
                   role === "TEAM_MEMBER"
                     ? "bg-gray-100 cursor-not-allowed"
@@ -189,12 +455,17 @@ function EditTask() {
 
           </div>
 
+
+          {/* ================================= */}
           {/* DESCRIPTION */}
+          {/* ================================= */}
 
           <div className="mb-6">
 
             <label className="block mb-3 font-semibold text-slate-700">
+
               Description
+
             </label>
 
             <div className="relative">
@@ -213,6 +484,7 @@ function EditTask() {
                 disabled={
                   role === "TEAM_MEMBER"
                 }
+                required
                 className={`w-full border border-gray-200 pl-12 p-4 rounded-2xl focus:outline-none focus:ring-2 ${
                   role === "TEAM_MEMBER"
                     ? "bg-gray-100 cursor-not-allowed"
@@ -224,12 +496,17 @@ function EditTask() {
 
           </div>
 
+
+          {/* ================================= */}
           {/* STATUS */}
+          {/* ================================= */}
 
           <div className="mb-6">
 
             <label className="block mb-3 font-semibold text-slate-700">
+
               Status
+
             </label>
 
             <select
@@ -261,12 +538,17 @@ function EditTask() {
 
           </div>
 
+
+          {/* ================================= */}
           {/* DUE DATE */}
+          {/* ================================= */}
 
           <div className="mb-8">
 
             <label className="block mb-3 font-semibold text-slate-700">
+
               Due Date
+
             </label>
 
             <div className="relative">
@@ -295,11 +577,16 @@ function EditTask() {
 
           </div>
 
+
+          {/* ================================= */}
           {/* BUTTON */}
+          {/* ================================= */}
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={
+              loading || !status
+            }
             className="w-full bg-yellow-500 hover:bg-yellow-600 disabled:bg-yellow-300 text-white py-4 rounded-2xl text-lg font-semibold shadow-lg transition"
           >
 
@@ -318,5 +605,6 @@ function EditTask() {
     </MainLayout>
   );
 }
+
 
 export default EditTask;
