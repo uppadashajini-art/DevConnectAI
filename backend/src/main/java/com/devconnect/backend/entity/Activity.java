@@ -1,3 +1,4 @@
+
 package com.devconnect.backend.entity;
 
 import jakarta.persistence.*;
@@ -16,9 +17,11 @@ public class Activity {
 
     private String color;
 
+    // Default constructor
     public Activity() {
     }
 
+    // Parameterized constructor
     public Activity(
             String title,
             String description,
@@ -29,6 +32,7 @@ public class Activity {
         this.color = color;
     }
 
+    // ID
     public Long getId() {
         return id;
     }
@@ -37,6 +41,7 @@ public class Activity {
         this.id = id;
     }
 
+    // TITLE
     public String getTitle() {
         return title;
     }
@@ -45,6 +50,7 @@ public class Activity {
         this.title = title;
     }
 
+    // DESCRIPTION
     public String getDescription() {
         return description;
     }
@@ -53,6 +59,7 @@ public class Activity {
         this.description = description;
     }
 
+    // COLOR
     public String getColor() {
         return color;
     }

@@ -3,6 +3,7 @@ package com.devconnect.backend.entity;
 import jakarta.persistence.*;
 
 @Entity
+@Table(name = "team")
 public class Team {
 
     @Id
@@ -17,13 +18,16 @@ public class Team {
 
     private String projectName;
 
+    // Default constructor
     public Team() {
     }
 
-    public Team(String memberName,
-                String memberEmail,
-                String role,
-                String projectName) {
+    // Parameterized constructor
+    public Team(
+            String memberName,
+            String memberEmail,
+            String role,
+            String projectName) {
 
         this.memberName = memberName;
         this.memberEmail = memberEmail;
@@ -31,10 +35,16 @@ public class Team {
         this.projectName = projectName;
     }
 
+    // ID
     public Long getId() {
         return id;
     }
 
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    // MEMBER NAME
     public String getMemberName() {
         return memberName;
     }
@@ -43,6 +53,7 @@ public class Team {
         this.memberName = memberName;
     }
 
+    // MEMBER EMAIL
     public String getMemberEmail() {
         return memberEmail;
     }
@@ -51,6 +62,7 @@ public class Team {
         this.memberEmail = memberEmail;
     }
 
+    // ROLE
     public String getRole() {
         return role;
     }
@@ -59,6 +71,7 @@ public class Team {
         this.role = role;
     }
 
+    // PROJECT NAME
     public String getProjectName() {
         return projectName;
     }

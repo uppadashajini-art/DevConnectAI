@@ -20,12 +20,11 @@ public class Task {
 
     private String assignedTo;
 
-    // USER EMAIL
     private String userEmail;
 
-    // PROJECT ID
     private Long projectId;
 
+    // Default constructor
     public Task() {
     }
 
