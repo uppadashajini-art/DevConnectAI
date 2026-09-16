@@ -14,15 +14,20 @@ public class ActivityService {
     @Autowired
     private ActivityRepository repository;
 
+    // =========================================
+    // GET ALL ACTIVITIES
+    // =========================================
     public List<Activity> getAllActivities() {
 
         return repository.findAll();
-
     }
 
-    public Activity saveActivity(Activity activity) {
+    // =========================================
+    // SAVE ACTIVITY
+    // =========================================
+    public Activity saveActivity(
+            Activity activity) {
 
         return repository.save(activity);
-
     }
 }

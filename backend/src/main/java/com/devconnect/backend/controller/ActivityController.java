@@ -16,18 +16,22 @@ public class ActivityController {
     @Autowired
     private ActivityService service;
 
+    // =========================================
+    // GET ALL ACTIVITIES
+    // =========================================
     @GetMapping
     public List<Activity> getActivities() {
 
         return service.getAllActivities();
-
     }
 
+    // =========================================
+    // CREATE ACTIVITY
+    // =========================================
     @PostMapping
     public Activity saveActivity(
             @RequestBody Activity activity) {
 
         return service.saveActivity(activity);
-
     }
 }

@@ -8,64 +8,72 @@ import java.util.Date;
 
 public class JwtUtil {
 
-    // =========================
-    // STRONG SECRET KEY
-    // =========================
+    // =========================================
+    // SECRET KEY
+    // =========================================
+    //
+    // IMPORTANT:
+    // In production, store this in an environment
+    // variable instead of hard-coding it.
+    //
     private static final String SECRET =
-
             "devconnectsecretkeydevconnectsecretkey123456";
 
-    // =========================
-    // GENERATE TOKEN
-    // =========================
+    // =========================================
+    // TOKEN EXPIRATION
+    // =========================================
+    // 24 hours
+    private static final long EXPIRATION_TIME =
+            1000L * 60 * 60 * 24;
+
+    // =========================================
+    // GENERATE JWT TOKEN
+    // =========================================
     public static String generateToken(
-
             String email,
-
-            String role
-
-    ) {
+            String role) {
 
         return Jwts.builder()
 
+                // User email
                 .setSubject(email)
 
+                // User role
                 .claim("role", role)
 
-                .setIssuedAt(
-                        new Date()
-                )
+                // Token creation time
+                .setIssuedAt(new Date())
 
+                // Token expiration time
                 .setExpiration(
                         new Date(
                                 System.currentTimeMillis()
-                                        + 1000 * 60 * 60 * 24
+                                        + EXPIRATION_TIME
                         )
                 )
 
+                // Sign token using HS256
                 .signWith(
                         SignatureAlgorithm.HS256,
                         SECRET.getBytes()
                 )
 
+                // Convert to String
                 .compact();
     }
 
-    // =========================
-    // VALIDATE TOKEN
-    // =========================
+    // =========================================
+    // VALIDATE JWT TOKEN
+    // =========================================
     public static boolean validateToken(
-            String token
-    ) {
+            String token) {
 
         try {
 
             Jwts.parser()
-
                     .setSigningKey(
                             SECRET.getBytes()
                     )
-
                     .parseClaimsJws(token);
 
             return true;
@@ -76,42 +84,36 @@ public class JwtUtil {
         }
     }
 
-    // =========================
+    // =========================================
     // EXTRACT EMAIL
-    // =========================
+    // =========================================
     public static String extractEmail(
-            String token
-    ) {
+            String token) {
 
-        Claims claims = Jwts.parser()
-
-                .setSigningKey(
-                        SECRET.getBytes()
-                )
-
-                .parseClaimsJws(token)
-
-                .getBody();
+        Claims claims =
+                Jwts.parser()
+                        .setSigningKey(
+                                SECRET.getBytes()
+                        )
+                        .parseClaimsJws(token)
+                        .getBody();
 
         return claims.getSubject();
     }
 
-    // =========================
+    // =========================================
     // EXTRACT ROLE
-    // =========================
+    // =========================================
     public static String extractRole(
-            String token
-    ) {
+            String token) {
 
-        Claims claims = Jwts.parser()
-
-                .setSigningKey(
-                        SECRET.getBytes()
-                )
-
-                .parseClaimsJws(token)
-
-                .getBody();
+        Claims claims =
+                Jwts.parser()
+                        .setSigningKey(
+                                SECRET.getBytes()
+                        )
+                        .parseClaimsJws(token)
+                        .getBody();
 
         return claims.get(
                 "role",

@@ -15,10 +15,16 @@ public class AIController {
     @Autowired
     private AIService aiService;
 
+    // =========================================
+    // GENERATE TASKS USING AI
+    // =========================================
     @PostMapping("/generate-tasks")
-    public ResponseEntity<String> generateTasks(@RequestBody AIRequest request) {
+    public ResponseEntity<String> generateTasks(
+            @RequestBody AIRequest request) {
 
-        String response = aiService.generateTasks(request.getProjectDescription());
+        String response = aiService.generateTasks(
+                request.getProjectDescription()
+        );
 
         return ResponseEntity.ok(response);
     }

@@ -21,29 +21,26 @@ public class ProjectController {
     // CREATE PROJECT
     // =========================================
     @PostMapping
-    public Project createProject(
-            @RequestBody Project project) {
+    public Project createProject(@RequestBody Project project) {
 
         return service.createProject(project);
     }
 
     // =========================================
     // GET ALL PROJECTS
-    // ADMIN & PROJECT_MANAGER
     // =========================================
     @GetMapping
-public List<Project> getAllProjects() {
+    public List<Project> getAllProjects() {
 
-    System.out.println("🔥🔥 PROJECT CONTROLLER REACHED 🔥🔥");
+        System.out.println("🔥🔥 PROJECT CONTROLLER REACHED 🔥🔥");
 
-    return service.getAllProjects();
-}
+        return service.getAllProjects();
+    }
 
     // =========================================
     // GET PROJECTS BY USER EMAIL
-    // TEAM_MEMBER
     // =========================================
-    @GetMapping("/{email}")
+    @GetMapping("/user/{email}")
     public List<Project> getProjectsByEmail(
             @PathVariable String email) {
 

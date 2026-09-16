@@ -29,7 +29,6 @@ public class TaskController {
 
     // =========================================
     // GET ALL TASKS
-    // ADMIN & PROJECT_MANAGER
     // =========================================
     @GetMapping
     public List<Task> getAllTasks() {
@@ -39,10 +38,9 @@ public class TaskController {
 
     // =========================================
     // GET TASKS BY USER EMAIL
-    // TEAM_MEMBER
     // =========================================
-    @GetMapping("/{email}")
-    public List<Task> getAllTasks(
+    @GetMapping("/user/{email}")
+    public List<Task> getTasksByUserEmail(
             @PathVariable String email) {
 
         return service.getAllTasks(email);

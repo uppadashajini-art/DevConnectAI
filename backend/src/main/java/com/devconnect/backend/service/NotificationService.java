@@ -14,25 +14,41 @@ public class NotificationService {
     @Autowired
     private NotificationRepository notificationRepository;
 
+    // =========================================
     // CREATE NOTIFICATION
+    // =========================================
     public Notification createNotification(
             Notification notification) {
 
-        return notificationRepository
-                .save(notification);
+        return notificationRepository.save(
+                notification
+        );
     }
 
+    // =========================================
     // GET ALL NOTIFICATIONS
+    // =========================================
     public List<Notification> getAllNotifications() {
 
-        return notificationRepository
-                .findAll();
+        return notificationRepository.findAll();
     }
 
+    // =========================================
+    // GET NOTIFICATION BY ID
+    // =========================================
+    public Notification getNotificationById(
+            Long id) {
+
+        return notificationRepository
+                .findById(id)
+                .orElse(null);
+    }
+
+    // =========================================
     // DELETE NOTIFICATION
+    // =========================================
     public void deleteNotification(Long id) {
 
-        notificationRepository
-                .deleteById(id);
+        notificationRepository.deleteById(id);
     }
 }

@@ -4,6 +4,7 @@ import com.devconnect.backend.entity.Team;
 import com.devconnect.backend.service.TeamService;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,55 +17,92 @@ public class TeamController {
     @Autowired
     private TeamService teamService;
 
-    // ADD MEMBER
+    // =========================================
+    // ADD TEAM MEMBER
+    // =========================================
     @PostMapping
-    public Team addMember(
+    public ResponseEntity<Team> addMember(
             @RequestBody Team team) {
 
-        return teamService.addMember(team);
+        Team savedMember =
+                teamService.addMember(team);
+
+        return ResponseEntity.ok(savedMember);
     }
 
-    // GET ALL MEMBERS
+    // =========================================
+    // GET ALL TEAM MEMBERS
+    // =========================================
     @GetMapping
-    public List<Team> getAllMembers() {
+    public ResponseEntity<List<Team>> getAllMembers() {
 
-        return teamService.getAllMembers();
+        List<Team> members =
+                teamService.getAllMembers();
+
+        return ResponseEntity.ok(members);
     }
 
-    // UPDATE MEMBER
+    // =========================================
+    // UPDATE TEAM MEMBER
+    // =========================================
     @PutMapping("/{id}")
-    public Team updateMember(
+    public ResponseEntity<?> updateMember(
             @PathVariable Long id,
             @RequestBody Team updatedTeam) {
 
         Team existingTeam =
                 teamService.getMemberById(id);
 
-        if (existingTeam != null) {
+        if (existingTeam == null) {
 
-            existingTeam.setMemberName(
-                    updatedTeam.getMemberName());
-
-            existingTeam.setMemberEmail(
-                    updatedTeam.getMemberEmail());
-
-            existingTeam.setRole(
-                    updatedTeam.getRole());
-
-            existingTeam.setProjectName(
-                    updatedTeam.getProjectName());
-
-            return teamService.addMember(existingTeam);
+            return ResponseEntity
+                    .notFound()
+                    .build();
         }
 
-        return null;
+        existingTeam.setMemberName(
+                updatedTeam.getMemberName()
+        );
+
+        existingTeam.setMemberEmail(
+                updatedTeam.getMemberEmail()
+        );
+
+        existingTeam.setRole(
+                updatedTeam.getRole()
+        );
+
+        existingTeam.setProjectName(
+                updatedTeam.getProjectName()
+        );
+
+        Team savedMember =
+                teamService.addMember(existingTeam);
+
+        return ResponseEntity.ok(savedMember);
     }
 
-    // DELETE MEMBER
+    // =========================================
+    // DELETE TEAM MEMBER
+    // =========================================
     @DeleteMapping("/{id}")
-    public void deleteMember(
+    public ResponseEntity<String> deleteMember(
             @PathVariable Long id) {
 
+        Team existingTeam =
+                teamService.getMemberById(id);
+
+        if (existingTeam == null) {
+
+            return ResponseEntity
+                    .notFound()
+                    .build();
+        }
+
         teamService.deleteMember(id);
+
+        return ResponseEntity.ok(
+                "Team member deleted successfully"
+        );
     }
 }

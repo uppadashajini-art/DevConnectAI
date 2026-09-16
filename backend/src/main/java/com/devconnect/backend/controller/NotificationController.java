@@ -4,6 +4,7 @@ import com.devconnect.backend.entity.Notification;
 import com.devconnect.backend.service.NotificationService;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,29 +17,44 @@ public class NotificationController {
     @Autowired
     private NotificationService notificationService;
 
+    // =========================================
     // CREATE NOTIFICATION
+    // =========================================
     @PostMapping
-    public Notification createNotification(
+    public ResponseEntity<Notification> createNotification(
             @RequestBody Notification notification) {
 
-        return notificationService
-                .createNotification(notification);
+        Notification createdNotification =
+                notificationService.createNotification(
+                        notification
+                );
+
+        return ResponseEntity.ok(createdNotification);
     }
 
+    // =========================================
     // GET ALL NOTIFICATIONS
+    // =========================================
     @GetMapping
-    public List<Notification> getAllNotifications() {
+    public ResponseEntity<List<Notification>> getAllNotifications() {
 
-        return notificationService
-                .getAllNotifications();
+        List<Notification> notifications =
+                notificationService.getAllNotifications();
+
+        return ResponseEntity.ok(notifications);
     }
 
+    // =========================================
     // DELETE NOTIFICATION
+    // =========================================
     @DeleteMapping("/{id}")
-    public void deleteNotification(
+    public ResponseEntity<String> deleteNotification(
             @PathVariable Long id) {
 
-        notificationService
-                .deleteNotification(id);
+        notificationService.deleteNotification(id);
+
+        return ResponseEntity.ok(
+                "Notification deleted successfully"
+        );
     }
 }

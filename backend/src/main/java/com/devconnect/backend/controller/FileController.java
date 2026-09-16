@@ -23,55 +23,87 @@ public class FileController {
     @Autowired
     private FileRepository fileRepository;
 
+    // =========================================
     // UPLOAD DIRECTORY
+    // =========================================
     private final String uploadDir =
-            System.getProperty("user.dir")
-                    + "/uploads/";
+            System.getProperty("user.dir") + "/uploads/";
 
+    // =========================================
     // GET ALL FILES
+    // =========================================
     @GetMapping
     public List<FileDocument> getAllFiles() {
 
         return fileRepository.findAll();
     }
 
+    // =========================================
     // UPLOAD FILE
+    // =========================================
     @PostMapping("/upload")
     public ResponseEntity<String> uploadFile(
-            @RequestParam("file") MultipartFile file
-    ) {
+            @RequestParam("file") MultipartFile file) {
 
         try {
 
-            // CREATE FOLDER
+            // Check if file is empty
+            if (file.isEmpty()) {
+
+                return ResponseEntity
+                        .badRequest()
+                        .body("Please select a file");
+            }
+
+            // Create uploads folder
             File folder = new File(uploadDir);
 
             if (!folder.exists()) {
 
-                folder.mkdirs();
+                boolean created = folder.mkdirs();
+
+                if (!created && !folder.exists()) {
+
+                    return ResponseEntity
+                            .internalServerError()
+                            .body("Could not create upload directory");
+                }
             }
 
-            // FILE PATH
-            String filePath =
-                    uploadDir +
-                            file.getOriginalFilename();
+            // Get original filename
+            String originalFileName =
+                    file.getOriginalFilename();
 
-            // SAVE FILE
-            file.transferTo(
-                    new File(filePath));
+            if (originalFileName == null ||
+                    originalFileName.trim().isEmpty()) {
 
-            // SAVE DATABASE
+                return ResponseEntity
+                        .badRequest()
+                        .body("Invalid file name");
+            }
+
+            // Create file path
+            File destinationFile =
+                    new File(
+                            uploadDir + originalFileName
+                    );
+
+            // Save physical file
+            file.transferTo(destinationFile);
+
+            // Save file information in database
             FileDocument document =
                     new FileDocument();
 
-            document.setFileName(
-                    file.getOriginalFilename());
+            document.setFileName(originalFileName);
 
             document.setFileType(
-                    file.getContentType());
+                    file.getContentType()
+            );
 
             document.setFilePath(
-                    filePath);
+                    destinationFile.getAbsolutePath()
+            );
 
             fileRepository.save(document);
 
@@ -84,21 +116,23 @@ public class FileController {
             e.printStackTrace();
 
             return ResponseEntity
-                    .badRequest()
+                    .internalServerError()
                     .body("Upload failed");
         }
     }
 
+    // =========================================
     // VIEW FILE
+    // =========================================
     @GetMapping("/view/{id}")
     public ResponseEntity<Resource> viewFile(
-            @PathVariable Long id
-    ) throws IOException {
+            @PathVariable Long id) throws IOException {
 
         FileDocument document =
                 fileRepository.findById(id)
                         .orElse(null);
 
+        // File record not found
         if (document == null) {
 
             return ResponseEntity
@@ -106,56 +140,85 @@ public class FileController {
                     .build();
         }
 
+        // Get physical file
         File file =
                 new File(
-                        document.getFilePath());
+                        document.getFilePath()
+                );
 
+        // Physical file not found
+        if (!file.exists()) {
+
+            return ResponseEntity
+                    .notFound()
+                    .build();
+        }
+
+        // Convert file into Resource
         Resource resource =
                 new UrlResource(
-                        file.toURI());
+                        file.toURI()
+                );
 
         return ResponseEntity.ok()
                 .header(
                         HttpHeaders.CONTENT_DISPOSITION,
-                        "inline; filename=\""
-                                + document.getFileName()
-                                + "\""
+                        "inline; filename=\"" +
+                                document.getFileName() +
+                                "\""
+                )
+                .header(
+                        HttpHeaders.CONTENT_TYPE,
+                        document.getFileType() != null
+                                ? document.getFileType()
+                                : "application/octet-stream"
                 )
                 .body(resource);
     }
 
+    // =========================================
     // DELETE FILE
+    // =========================================
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteFile(
-            @PathVariable Long id
-    ) {
+            @PathVariable Long id) {
 
         FileDocument document =
                 fileRepository.findById(id)
                         .orElse(null);
 
-        if (document != null) {
+        // Database record not found
+        if (document == null) {
 
-            // DELETE PHYSICAL FILE
-            File file =
-                    new File(
-                            document.getFilePath());
-
-            if (file.exists()) {
-
-                file.delete();
-            }
-
-            // DELETE DATABASE
-            fileRepository.deleteById(id);
-
-            return ResponseEntity.ok(
-                    "File deleted successfully"
-            );
+            return ResponseEntity
+                    .badRequest()
+                    .body("File not found");
         }
 
-        return ResponseEntity
-                .badRequest()
-                .body("File not found");
+        // Get physical file
+        File file =
+                new File(
+                        document.getFilePath()
+                );
+
+        // Delete physical file
+        if (file.exists()) {
+
+            boolean deleted = file.delete();
+
+            if (!deleted) {
+
+                return ResponseEntity
+                        .internalServerError()
+                        .body("Could not delete physical file");
+            }
+        }
+
+        // Delete database record
+        fileRepository.deleteById(id);
+
+        return ResponseEntity.ok(
+                "File deleted successfully"
+        );
     }
 }

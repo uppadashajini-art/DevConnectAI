@@ -1,12 +1,12 @@
 package com.devconnect.backend.service;
 
-import com.devconnect.backend.entity.Task;
 import com.devconnect.backend.entity.Activity;
 import com.devconnect.backend.entity.Notification;
+import com.devconnect.backend.entity.Task;
 
-import com.devconnect.backend.repository.TaskRepository;
 import com.devconnect.backend.repository.ActivityRepository;
 import com.devconnect.backend.repository.NotificationRepository;
+import com.devconnect.backend.repository.TaskRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -34,32 +34,40 @@ public class TaskService {
         Task savedTask =
                 repository.save(task);
 
+        // -----------------------------------------
         // SAVE ACTIVITY
+        // -----------------------------------------
+
         Activity activity =
                 new Activity();
 
         activity.setTitle(
-                "New Task Created");
+                "New Task Created"
+        );
 
         activity.setDescription(
-                task.getTitle() +
-                " task was created"
+                task.getTitle()
+                        + " task was created"
         );
 
         activity.setColor("blue");
 
         activityRepository.save(activity);
 
+        // -----------------------------------------
         // SAVE NOTIFICATION
+        // -----------------------------------------
+
         Notification notification =
                 new Notification();
 
         notification.setTitle(
-                "Task Created");
+                "Task Created"
+        );
 
         notification.setMessage(
-                task.getTitle() +
-                " task was created"
+                task.getTitle()
+                        + " task was created"
         );
 
         notification.setType("task");
@@ -73,7 +81,6 @@ public class TaskService {
 
     // =========================================
     // GET ALL TASKS
-    // ADMIN & PROJECT_MANAGER
     // =========================================
     public List<Task> getAllTasks() {
 
@@ -82,13 +89,13 @@ public class TaskService {
 
     // =========================================
     // GET TASKS BY USER EMAIL
-    // TEAM_MEMBER
     // =========================================
     public List<Task> getAllTasks(
             String userEmail) {
 
         return repository.findByUserEmail(
-                userEmail);
+                userEmail
+        );
     }
 
     // =========================================
@@ -109,72 +116,86 @@ public class TaskService {
 
         Task task =
                 repository.findById(id)
-                .orElse(null);
+                        .orElse(null);
 
-        if (task != null) {
-
-            task.setTitle(
-                    updatedTask.getTitle());
-
-            task.setDescription(
-                    updatedTask.getDescription());
-
-            task.setStatus(
-                    updatedTask.getStatus());
-
-            task.setDueDate(
-                    updatedTask.getDueDate());
-
-            task.setAssignedTo(
-                    updatedTask.getAssignedTo());
-
-            task.setUserEmail(
-                    updatedTask.getUserEmail());
-
-            task.setProjectId(
-                    updatedTask.getProjectId());
-
-            Task updated =
-                    repository.save(task);
-
-            // SAVE ACTIVITY
-            Activity activity =
-                    new Activity();
-
-            activity.setTitle(
-                    "Task Updated");
-
-            activity.setDescription(
-                    task.getTitle() +
-                    " task was updated"
-            );
-
-            activity.setColor("green");
-
-            activityRepository.save(activity);
-
-            // SAVE NOTIFICATION
-            Notification notification =
-                    new Notification();
-
-            notification.setTitle(
-                    "Task Updated");
-
-            notification.setMessage(
-                    task.getTitle() +
-                    " task was updated"
-            );
-
-            notification.setType("task");
-
-            notification.setTime("Just Now");
-
-            notificationRepository.save(notification);
-
-            return updated;
+        if (task == null) {
+            return null;
         }
 
-        return null;
+        task.setTitle(
+                updatedTask.getTitle()
+        );
+
+        task.setDescription(
+                updatedTask.getDescription()
+        );
+
+        task.setStatus(
+                updatedTask.getStatus()
+        );
+
+        task.setDueDate(
+                updatedTask.getDueDate()
+        );
+
+        task.setAssignedTo(
+                updatedTask.getAssignedTo()
+        );
+
+        task.setUserEmail(
+                updatedTask.getUserEmail()
+        );
+
+        task.setProjectId(
+                updatedTask.getProjectId()
+        );
+
+        Task updated =
+                repository.save(task);
+
+        // -----------------------------------------
+        // SAVE ACTIVITY
+        // -----------------------------------------
+
+        Activity activity =
+                new Activity();
+
+        activity.setTitle(
+                "Task Updated"
+        );
+
+        activity.setDescription(
+                task.getTitle()
+                        + " task was updated"
+        );
+
+        activity.setColor("green");
+
+        activityRepository.save(activity);
+
+        // -----------------------------------------
+        // SAVE NOTIFICATION
+        // -----------------------------------------
+
+        Notification notification =
+                new Notification();
+
+        notification.setTitle(
+                "Task Updated"
+        );
+
+        notification.setMessage(
+                task.getTitle()
+                        + " task was updated"
+        );
+
+        notification.setType("task");
+
+        notification.setTime("Just Now");
+
+        notificationRepository.save(notification);
+
+        return updated;
     }
 
     // =========================================
@@ -182,32 +203,51 @@ public class TaskService {
     // =========================================
     public String deleteTask(Long id) {
 
+        Task task =
+                repository.findById(id)
+                        .orElse(null);
+
+        if (task == null) {
+            return "Task not found";
+        }
+
+        // Delete task
         repository.deleteById(id);
 
+        // -----------------------------------------
         // SAVE ACTIVITY
+        // -----------------------------------------
+
         Activity activity =
                 new Activity();
 
         activity.setTitle(
-                "Task Deleted");
+                "Task Deleted"
+        );
 
         activity.setDescription(
-                "A task was deleted"
+                task.getTitle()
+                        + " task was deleted"
         );
 
         activity.setColor("red");
 
         activityRepository.save(activity);
 
+        // -----------------------------------------
         // SAVE NOTIFICATION
+        // -----------------------------------------
+
         Notification notification =
                 new Notification();
 
         notification.setTitle(
-                "Task Deleted");
+                "Task Deleted"
+        );
 
         notification.setMessage(
-                "A task was deleted"
+                task.getTitle()
+                        + " task was deleted"
         );
 
         notification.setType("task");
