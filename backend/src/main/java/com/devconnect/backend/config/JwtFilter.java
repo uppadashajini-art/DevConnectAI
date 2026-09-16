@@ -1,4 +1,3 @@
-
 package com.devconnect.backend.config;
 
 import com.devconnect.backend.entity.User;
@@ -33,42 +32,31 @@ public class JwtFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        // =========================================
-        // GET REQUEST PATH
-        // =========================================
         String path = request.getServletPath();
 
         // =========================================
-        // ALLOW OPTIONS REQUEST
+        // CORS PRE-FLIGHT
         // =========================================
         if (request.getMethod().equalsIgnoreCase("OPTIONS")) {
-
             filterChain.doFilter(request, response);
-
             return;
         }
 
         // =========================================
-        // PUBLIC ROUTES
+        // PUBLIC AUTH APIs
         // =========================================
         if (path.equals("/api/auth/login")
-                || path.equals("/api/auth/register")
-                || path.equals("/api/users")) {
+                || path.equals("/api/auth/register")) {
 
             filterChain.doFilter(request, response);
-
             return;
         }
 
         // =========================================
-        // GET AUTHORIZATION HEADER
+        // GET JWT TOKEN
         // =========================================
-        String authHeader =
-                request.getHeader("Authorization");
+        String authHeader = request.getHeader("Authorization");
 
-        // =========================================
-        // NO JWT
-        // =========================================
         if (authHeader == null
                 || !authHeader.startsWith("Bearer ")) {
 
@@ -82,7 +70,6 @@ public class JwtFilter extends OncePerRequestFilter {
             System.out.println("================================");
 
             filterChain.doFilter(request, response);
-
             return;
         }
 
@@ -149,9 +136,6 @@ public class JwtFilter extends OncePerRequestFilter {
                         .findByEmail(email)
                         .orElse(null);
 
-        // =========================================
-        // USER NOT FOUND
-        // =========================================
         if (user == null) {
 
             System.out.println("================================");
@@ -172,19 +156,12 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
         // =========================================
-        // GET USER ROLE
+        // CREATE ROLE AUTHORITY
         // =========================================
         String userRole = user.getRole();
 
-        // =========================================
-        // CREATE SPRING SECURITY AUTHORITY
-        // =========================================
-        String authority =
-                "ROLE_" + userRole;
+        String authority = "ROLE_" + userRole;
 
-        // =========================================
-        // DEBUG LOGGING
-        // =========================================
         System.out.println("================================");
         System.out.println("JWT FILTER");
         System.out.println("REQUEST METHOD: "
@@ -213,9 +190,6 @@ public class JwtFilter extends OncePerRequestFilter {
                         )
                 );
 
-        // =========================================
-        // REQUEST DETAILS
-        // =========================================
         authentication.setDetails(
                 new WebAuthenticationDetailsSource()
                         .buildDetails(request)
@@ -228,9 +202,6 @@ public class JwtFilter extends OncePerRequestFilter {
                 .getContext()
                 .setAuthentication(authentication);
 
-        // =========================================
-        // PRINT SPRING AUTHORITIES
-        // =========================================
         System.out.println(
                 "SPRING AUTHORITIES: "
                         + authentication.getAuthorities()
