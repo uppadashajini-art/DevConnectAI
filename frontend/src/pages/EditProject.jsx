@@ -18,25 +18,22 @@ import {
 
 import MainLayout from "../layouts/MainLayout";
 
+
 function EditProject() {
+
   const { id } = useParams();
 
   const navigate = useNavigate();
 
   // =========================================
-  // GET ROLE
+  // GET USER ROLE
   // =========================================
 
-  const storedRole =
-    localStorage.getItem("role");
+  const storedRole = localStorage.getItem("role");
 
-  // Convert role to uppercase
-  // ADMIN / admin / Admin -> ADMIN
-  const role =
-    storedRole?.trim().toUpperCase();
-
-  console.log("EDIT PROJECT ROLE:", role);
-  console.log("PROJECT ID:", id);
+  const role = storedRole
+    ? storedRole.trim().toUpperCase()
+    : "";
 
   // =========================================
   // STATES
@@ -56,52 +53,62 @@ function EditProject() {
   const [fetching, setFetching] =
     useState(true);
 
+  const [error, setError] =
+    useState("");
+
   // =========================================
   // FETCH PROJECT
   // =========================================
 
   const fetchProject = useCallback(async () => {
+
     try {
+
       setFetching(true);
 
-      /*
-       * IMPORTANT:
-       *
-       * axiosConfig baseURL already contains /api
-       *
-       * baseURL:
-       * https://devconnectai.onrender.com/api
-       *
-       * Therefore:
-       *
-       * "/projects/1"
-       *
-       * becomes:
-       *
-       * https://devconnectai.onrender.com/api/projects/1
-       *
-       * DO NOT write /api/projects/1 here.
-       */
+      setError("");
+
+      console.log(
+        "Fetching project ID:",
+        id
+      );
+
+      // IMPORTANT:
+      //
+      // axiosConfig baseURL:
+      // https://devconnectai.onrender.com/api
+      //
+      // Therefore use:
+      // /projects/1
+      //
+      // NOT:
+      // /api/projects/1
 
       const response = await axios.get(
         `/projects/${id}`
       );
 
       console.log(
-        "PROJECT FETCH RESPONSE:",
+        "PROJECT DATA:",
         response.data
       );
 
+      const project = response.data;
+
+      // =====================================
+      // LOAD EXISTING DATA INTO FORM
+      // =====================================
+
       setTitle(
-        response.data.title || ""
+        project.title || ""
       );
 
       setDescription(
-        response.data.description || ""
+        project.description || ""
       );
 
       setTechStack(
-        response.data.techStack || ""
+        project.techStack || ""
       );
 
     } catch (error) {
@@ -121,19 +128,40 @@ function EditProject() {
         error.response?.data
       );
 
-      alert(
-        "Unable to load project"
-      );
+      if (
+        error.response?.status === 403
+      ) {
+
+        setError(
+          "Access denied. Please login again."
+        );
+
+      } else if (
+        error.response?.status === 404
+      ) {
+
+        setError(
+          "Project not found."
+        );
+
+      } else {
+
+        setError(
+          "Unable to load project."
+        );
+      }
 
     } finally {
 
       setFetching(false);
 
     }
+
   }, [id]);
 
+
   // =========================================
-  // LOAD PROJECT
+  // LOAD PROJECT WHEN PAGE OPENS
   // =========================================
 
   useEffect(() => {
@@ -144,6 +172,7 @@ function EditProject() {
 
   }, [fetchProject, id]);
 
+
   // =========================================
   // UPDATE PROJECT
   // =========================================
@@ -152,18 +181,34 @@ function EditProject() {
 
     e.preventDefault();
 
+    // =====================================
+    // VALIDATION
+    // =====================================
+
     if (!title.trim()) {
-      alert("Project title is required");
+
+      alert(
+        "Project title is required."
+      );
+
       return;
     }
 
     if (!description.trim()) {
-      alert("Project description is required");
+
+      alert(
+        "Project description is required."
+      );
+
       return;
     }
 
     if (!techStack.trim()) {
-      alert("Tech stack is required");
+
+      alert(
+        "Tech stack is required."
+      );
+
       return;
     }
 
@@ -171,10 +216,22 @@ function EditProject() {
 
       setLoading(true);
 
+      setError("");
+
+      // =====================================
+      // DATA TO SEND
+      // =====================================
+
       const projectData = {
+
         title: title.trim(),
-        description: description.trim(),
-        techStack: techStack.trim(),
+
+        description:
+          description.trim(),
+
+        techStack:
+          techStack.trim(),
+
       };
 
       console.log(
@@ -182,17 +239,17 @@ function EditProject() {
         projectData
       );
 
-      /*
-       * IMPORTANT:
-       *
-       * Correct:
-       * /projects/${id}
-       *
-       * Axios automatically adds /api
-       *
-       * Final URL:
-       * /api/projects/${id}
-       */
+      // =====================================
+      // UPDATE PROJECT
+      // =====================================
+
+      // Correct:
+      // /projects/1
+      //
+      // Axios automatically adds /api
+      //
+      // Final:
+      // /api/projects/1
 
       const response = await axios.put(
         `/projects/${id}`,
@@ -203,6 +260,10 @@ function EditProject() {
         "UPDATE RESPONSE:",
         response.data
       );
+
+      // =====================================
+      // SUCCESS
+      // =====================================
 
       alert(
         "Project Updated Successfully"
@@ -227,13 +288,17 @@ function EditProject() {
         error.response?.data
       );
 
-      if (error.response?.status === 403) {
+      if (
+        error.response?.status === 403
+      ) {
 
         alert(
-          "Access denied. Please login again."
+          "Access denied. You are not authorized to update this project."
         );
 
-      } else if (error.response?.status === 404) {
+      } else if (
+        error.response?.status === 404
+      ) {
 
         alert(
           "Project not found."
@@ -242,9 +307,8 @@ function EditProject() {
       } else {
 
         alert(
-          "Error Updating Project"
+          "Error updating project."
         );
-
       }
 
     } finally {
@@ -254,8 +318,9 @@ function EditProject() {
     }
   };
 
+
   // =========================================
-  // BLOCK UNAUTHORIZED USERS
+  // ACCESS CONTROL
   // =========================================
 
   if (
@@ -264,6 +329,7 @@ function EditProject() {
   ) {
 
     return (
+
       <MainLayout>
 
         <div
@@ -272,6 +338,7 @@ function EditProject() {
             justify-center
             items-center
             h-[80vh]
+            px-4
           "
         >
 
@@ -283,8 +350,11 @@ function EditProject() {
               p-12
               text-center
               max-w-lg
+              w-full
             "
           >
+
+            {/* LOCK ICON */}
 
             <div
               className="
@@ -305,6 +375,9 @@ function EditProject() {
 
             </div>
 
+
+            {/* TITLE */}
+
             <h1
               className="
                 text-4xl
@@ -315,6 +388,9 @@ function EditProject() {
             >
               Access Denied
             </h1>
+
+
+            {/* MESSAGE */}
 
             <p
               className="
@@ -327,7 +403,11 @@ function EditProject() {
               can edit projects.
             </p>
 
+
+            {/* BUTTON */}
+
             <button
+              type="button"
               onClick={() =>
                 navigate("/dashboard")
               }
@@ -353,6 +433,7 @@ function EditProject() {
     );
   }
 
+
   // =========================================
   // LOADING PROJECT
   // =========================================
@@ -360,6 +441,7 @@ function EditProject() {
   if (fetching) {
 
     return (
+
       <MainLayout>
 
         <div
@@ -371,14 +453,22 @@ function EditProject() {
           "
         >
 
-          <div
-            className="
-              text-center
-              text-gray-500
-              text-xl
-            "
-          >
-            Loading project...
+          <div className="text-center">
+
+            <div
+              className="
+                text-gray-500
+                text-xl
+                font-semibold
+              "
+            >
+              Loading project...
+            </div>
+
+            <p className="text-gray-400 mt-2">
+              Please wait.
+            </p>
+
           </div>
 
         </div>
@@ -386,6 +476,86 @@ function EditProject() {
       </MainLayout>
     );
   }
+
+
+  // =========================================
+  // ERROR
+  // =========================================
+
+  if (error) {
+
+    return (
+
+      <MainLayout>
+
+        <div
+          className="
+            flex
+            justify-center
+            items-center
+            h-[70vh]
+            px-4
+          "
+        >
+
+          <div
+            className="
+              bg-white
+              rounded-3xl
+              shadow-xl
+              p-10
+              text-center
+              max-w-lg
+              w-full
+            "
+          >
+
+            <h2
+              className="
+                text-2xl
+                font-bold
+                text-red-600
+                mb-4
+              "
+            >
+              Unable to Load Project
+            </h2>
+
+            <p
+              className="
+                text-gray-500
+                mb-6
+              "
+            >
+              {error}
+            </p>
+
+            <button
+              type="button"
+              onClick={() =>
+                navigate("/projects")
+              }
+              className="
+                bg-yellow-500
+                hover:bg-yellow-600
+                text-white
+                px-6
+                py-3
+                rounded-xl
+                font-semibold
+              "
+            >
+              Back to Projects
+            </button>
+
+          </div>
+
+        </div>
+
+      </MainLayout>
+    );
+  }
+
 
   // =========================================
   // EDIT PROJECT FORM
@@ -401,6 +571,7 @@ function EditProject() {
           justify-center
           items-center
           py-10
+          px-4
         "
       >
 
@@ -418,9 +589,9 @@ function EditProject() {
           "
         >
 
-          {/* =========================
-              HEADER
-          ========================= */}
+          {/* ================================= */}
+          {/* HEADER */}
+          {/* ================================= */}
 
           <div
             className="
@@ -443,6 +614,7 @@ function EditProject() {
               <FaEdit className="text-3xl" />
 
             </div>
+
 
             <div>
 
@@ -470,9 +642,10 @@ function EditProject() {
 
           </div>
 
-          {/* =========================
-              TITLE
-          ========================= */}
+
+          {/* ================================= */}
+          {/* PROJECT TITLE */}
+          {/* ================================= */}
 
           <div className="mb-6">
 
@@ -503,8 +676,11 @@ function EditProject() {
                 placeholder="Project Title"
                 value={title}
                 onChange={(e) =>
-                  setTitle(e.target.value)
+                  setTitle(
+                    e.target.value
+                  )
                 }
+                required
                 className="
                   w-full
                   border
@@ -516,16 +692,16 @@ function EditProject() {
                   focus:ring-2
                   focus:ring-yellow-500
                 "
-                required
               />
 
             </div>
 
           </div>
 
-          {/* =========================
-              DESCRIPTION
-          ========================= */}
+
+          {/* ================================= */}
+          {/* DESCRIPTION */}
+          {/* ================================= */}
 
           <div className="mb-6">
 
@@ -560,6 +736,7 @@ function EditProject() {
                   )
                 }
                 rows="5"
+                required
                 className="
                   w-full
                   border
@@ -571,16 +748,16 @@ function EditProject() {
                   focus:ring-2
                   focus:ring-yellow-500
                 "
-                required
               />
 
             </div>
 
           </div>
 
-          {/* =========================
-              TECH STACK
-          ========================= */}
+
+          {/* ================================= */}
+          {/* TECH STACK */}
+          {/* ================================= */}
 
           <div className="mb-8">
 
@@ -608,13 +785,14 @@ function EditProject() {
 
               <input
                 type="text"
-                placeholder="React, Spring Boot..."
+                placeholder="React, Spring Boot, MySQL..."
                 value={techStack}
                 onChange={(e) =>
                   setTechStack(
                     e.target.value
                   )
                 }
+                required
                 className="
                   w-full
                   border
@@ -626,18 +804,25 @@ function EditProject() {
                   focus:ring-2
                   focus:ring-yellow-500
                 "
-                required
               />
 
             </div>
 
           </div>
 
-          {/* =========================
-              BUTTONS
-          ========================= */}
 
-          <div className="flex gap-4">
+          {/* ================================= */}
+          {/* BUTTONS */}
+          {/* ================================= */}
+
+          <div
+            className="
+              flex
+              gap-4
+            "
+          >
+
+            {/* UPDATE */}
 
             <button
               type="submit"
@@ -663,19 +848,27 @@ function EditProject() {
 
             </button>
 
+
+            {/* CANCEL */}
+
             <button
               type="button"
+              disabled={loading}
               onClick={() =>
                 navigate("/projects")
               }
               className="
-                px-8
-                py-4
-                rounded-2xl
+                flex-1
                 bg-gray-500
                 hover:bg-gray-600
+                disabled:bg-gray-400
                 text-white
+                py-4
+                rounded-2xl
+                text-lg
                 font-semibold
+                shadow-lg
+                transition
               "
             >
               Cancel
@@ -691,5 +884,5 @@ function EditProject() {
   );
 }
 
-export default EditProject;
 
+export default EditProject;
