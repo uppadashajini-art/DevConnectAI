@@ -35,15 +35,12 @@ public class JwtFilter extends OncePerRequestFilter {
         // =========================================
         // GET REQUEST PATH
         // =========================================
-
         String path = request.getServletPath();
 
         // =========================================
-        // ALLOW CORS OPTIONS REQUEST
+        // ALLOW OPTIONS REQUEST
         // =========================================
-
         if (request.getMethod().equalsIgnoreCase("OPTIONS")) {
-
             filterChain.doFilter(request, response);
             return;
         }
@@ -51,7 +48,6 @@ public class JwtFilter extends OncePerRequestFilter {
         // =========================================
         // PUBLIC ROUTES
         // =========================================
-
         if (path.equals("/api/auth/login")
                 || path.equals("/api/auth/register")
                 || path.equals("/api/users")) {
@@ -63,119 +59,121 @@ public class JwtFilter extends OncePerRequestFilter {
         // =========================================
         // GET AUTHORIZATION HEADER
         // =========================================
-
         String authHeader =
                 request.getHeader("Authorization");
 
         // =========================================
-        // CHECK JWT TOKEN
+        // NO JWT
         // =========================================
+        if (authHeader == null
+                || !authHeader.startsWith("Bearer ")) {
 
-        if (authHeader != null
-                && authHeader.startsWith("Bearer ")) {
-
-            // Remove "Bearer "
-            String token =
-                    authHeader.substring(7);
-
-            // =========================================
-            // VALIDATE TOKEN
-            // =========================================
-
-            boolean valid =
-                    JwtUtil.validateToken(token);
-
-            if (!valid) {
-
-                response.setStatus(
-                        HttpServletResponse.SC_UNAUTHORIZED
-                );
-
-                response.getWriter()
-                        .write("Invalid JWT Token");
-
-                return;
-            }
-
-            // =========================================
-            // GET EMAIL FROM TOKEN
-            // =========================================
-
-            String email =
-                    JwtUtil.extractEmail(token);
-
-            // =========================================
-            // FIND USER IN DATABASE
-            // =========================================
-
-            User user =
-                    userRepository
-                            .findByEmail(email)
-                            .orElse(null);
-
-            // =========================================
-            // USER FOUND
-            // =========================================
-
-            if (user != null) {
-
-                // Example:
-                // ADMIN -> ROLE_ADMIN
-                // PROJECT_MANAGER -> ROLE_PROJECT_MANAGER
-                // TEAM_MEMBER -> ROLE_TEAM_MEMBER
-
-                String role =
-                        "ROLE_" + user.getRole();
-
-                // =========================================
-                // CREATE AUTHENTICATION OBJECT
-                // =========================================
-
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                user,
-                                null,
-                                Collections.singletonList(
-                                        new SimpleGrantedAuthority(role)
-                                )
-                        );
-
-                // =========================================
-                // ADD REQUEST DETAILS
-                // =========================================
-
-                authentication.setDetails(
-                        new WebAuthenticationDetailsSource()
-                                .buildDetails(request)
-                );
-
-                // =========================================
-                // STORE AUTHENTICATION
-                // =========================================
-
-                SecurityContextHolder
-                        .getContext()
-                        .setAuthentication(authentication);
-
-            } else {
-
-                // Token is valid but user doesn't exist
-                response.setStatus(
-                        HttpServletResponse.SC_UNAUTHORIZED
-                );
-
-                response.getWriter()
-                        .write("User not found");
-
-                return;
-            }
-
+            filterChain.doFilter(request, response);
+            return;
         }
+
+        // =========================================
+        // EXTRACT TOKEN
+        // =========================================
+        String token = authHeader.substring(7);
+
+        // =========================================
+        // VALIDATE TOKEN
+        // =========================================
+        if (!JwtUtil.validateToken(token)) {
+
+            response.setStatus(
+                    HttpServletResponse.SC_UNAUTHORIZED
+            );
+
+            response.getWriter().write(
+                    "Invalid JWT Token"
+            );
+
+            return;
+        }
+
+        // =========================================
+        // EXTRACT EMAIL
+        // =========================================
+        String email;
+
+        try {
+            email = JwtUtil.extractEmail(token);
+        } catch (Exception e) {
+
+            response.setStatus(
+                    HttpServletResponse.SC_UNAUTHORIZED
+            );
+
+            response.getWriter().write(
+                    "Invalid JWT Token"
+            );
+
+            return;
+        }
+
+        // =========================================
+        // FIND USER
+        // =========================================
+        User user =
+                userRepository
+                        .findByEmail(email)
+                        .orElse(null);
+
+        if (user == null) {
+
+            response.setStatus(
+                    HttpServletResponse.SC_UNAUTHORIZED
+            );
+
+            response.getWriter().write(
+                    "User not found"
+            );
+
+            return;
+        }
+
+        // =========================================
+        // GET USER ROLE
+        // =========================================
+        String userRole = user.getRole();
+
+        // =========================================
+        // CREATE SPRING SECURITY ROLE
+        // =========================================
+        String authority =
+                "ROLE_" + userRole;
+
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(
+                        user,
+                        null,
+                        Collections.singletonList(
+                                new SimpleGrantedAuthority(
+                                        authority
+                                )
+                        )
+                );
+
+        // =========================================
+        // REQUEST DETAILS
+        // =========================================
+        authentication.setDetails(
+                new WebAuthenticationDetailsSource()
+                        .buildDetails(request)
+        );
+
+        // =========================================
+        // STORE AUTHENTICATION
+        // =========================================
+        SecurityContextHolder
+                .getContext()
+                .setAuthentication(authentication);
 
         // =========================================
         // CONTINUE REQUEST
         // =========================================
-
         filterChain.doFilter(request, response);
     }
 }

@@ -24,12 +24,9 @@ public class SecurityConfig {
             HttpSecurity http) throws Exception {
 
         http
-
                 // =========================================
                 // DISABLE CSRF
                 // =========================================
-                // JWT authentication is stateless,
-                // so CSRF protection is not required here.
                 .csrf(csrf -> csrf.disable())
 
                 // =========================================
@@ -51,35 +48,74 @@ public class SecurityConfig {
                 // =========================================
                 .authorizeHttpRequests(auth -> auth
 
-                        // ---------------------------------
-                        // CORS PRE-FLIGHT
-                        // ---------------------------------
+                        // CORS pre-flight
                         .requestMatchers(
                                 HttpMethod.OPTIONS,
                                 "/**"
                         )
                         .permitAll()
 
-                        // ---------------------------------
-                        // LOGIN + REGISTER
-                        // ---------------------------------
+                        // Login + Register
                         .requestMatchers(
                                 "/api/auth/**"
                         )
                         .permitAll()
 
-                        // ---------------------------------
                         // AI APIs
-                        // ---------------------------------
                         .requestMatchers(
                                 "/api/ai/**"
                         )
                         .permitAll()
 
-                        // ---------------------------------
-                        // ALL OTHER APIs
-                        // REQUIRE JWT
-                        // ---------------------------------
+                        // =====================================
+                        // PROJECT GET
+                        // =====================================
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/projects",
+                                "/api/projects/**"
+                        )
+                        .authenticated()
+
+                        // =====================================
+                        // PROJECT CREATE
+                        // =====================================
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/projects"
+                        )
+                        .hasAnyRole(
+                                "ADMIN",
+                                "PROJECT_MANAGER"
+                        )
+
+                        // =====================================
+                        // PROJECT UPDATE
+                        // =====================================
+                        .requestMatchers(
+                                HttpMethod.PUT,
+                                "/api/projects/**"
+                        )
+                        .hasAnyRole(
+                                "ADMIN",
+                                "PROJECT_MANAGER"
+                        )
+
+                        // =====================================
+                        // PROJECT DELETE
+                        // =====================================
+                        .requestMatchers(
+                                HttpMethod.DELETE,
+                                "/api/projects/**"
+                        )
+                        .hasAnyRole(
+                                "ADMIN",
+                                "PROJECT_MANAGER"
+                        )
+
+                        // =====================================
+                        // EVERYTHING ELSE
+                        // =====================================
                         .anyRequest()
                         .authenticated()
                 )
