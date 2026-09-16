@@ -1,9 +1,11 @@
+
 package com.devconnect.backend.controller;
 
 import com.devconnect.backend.entity.Project;
 import com.devconnect.backend.service.ProjectService;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -11,7 +13,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/projects")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "*")
 public class ProjectController {
 
     @Autowired
@@ -19,62 +21,146 @@ public class ProjectController {
 
     // =========================================
     // CREATE PROJECT
+    // POST /api/projects
     // =========================================
-    @PostMapping
-    public Project createProject(@RequestBody Project project) {
 
-        return service.createProject(project);
+    @PostMapping
+    public ResponseEntity<Project> createProject(
+            @RequestBody Project project) {
+
+        Project savedProject =
+                service.createProject(project);
+
+        return ResponseEntity.ok(savedProject);
     }
 
     // =========================================
     // GET ALL PROJECTS
+    // GET /api/projects
     // =========================================
+
     @GetMapping
-    public List<Project> getAllProjects() {
+    public ResponseEntity<List<Project>> getAllProjects() {
 
-        System.out.println("🔥🔥 PROJECT CONTROLLER REACHED 🔥🔥");
+        System.out.println(
+                "🔥🔥 PROJECT CONTROLLER - GET ALL REACHED 🔥🔥"
+        );
 
-        return service.getAllProjects();
+        List<Project> projects =
+                service.getAllProjects();
+
+        return ResponseEntity.ok(projects);
     }
 
     // =========================================
     // GET PROJECTS BY USER EMAIL
+    // GET /api/projects/user/{email}
     // =========================================
+
     @GetMapping("/user/{email}")
-    public List<Project> getProjectsByEmail(
+    public ResponseEntity<List<Project>> getProjectsByEmail(
             @PathVariable String email) {
 
-        return service.getAllProjects(email);
+        List<Project> projects =
+                service.getAllProjects(email);
+
+        return ResponseEntity.ok(projects);
     }
 
     // =========================================
     // GET PROJECT BY ID
+    // GET /api/projects/{id}
     // =========================================
-    @GetMapping("/project/{id}")
-    public Optional<Project> getProjectById(
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Project> getProjectById(
             @PathVariable Long id) {
 
-        return service.getProjectById(id);
+        System.out.println(
+                "🔥🔥 PROJECT CONTROLLER - GET BY ID REACHED 🔥🔥"
+        );
+
+        System.out.println(
+                "PROJECT ID: " + id
+        );
+
+        Optional<Project> project =
+                service.getProjectById(id);
+
+        if (project.isPresent()) {
+
+            return ResponseEntity.ok(
+                    project.get()
+            );
+        }
+
+        return ResponseEntity.notFound().build();
     }
 
     // =========================================
     // UPDATE PROJECT
+    // PUT /api/projects/{id}
     // =========================================
+
     @PutMapping("/{id}")
-    public Project updateProject(
+    public ResponseEntity<Project> updateProject(
             @PathVariable Long id,
             @RequestBody Project project) {
 
-        return service.updateProject(id, project);
+        System.out.println(
+                "🔥🔥 PROJECT CONTROLLER - UPDATE REACHED 🔥🔥"
+        );
+
+        System.out.println(
+                "PROJECT ID: " + id
+        );
+
+        Project updatedProject =
+                service.updateProject(
+                        id,
+                        project
+                );
+
+        if (updatedProject == null) {
+
+            return ResponseEntity
+                    .notFound()
+                    .build();
+        }
+
+        return ResponseEntity.ok(
+                updatedProject
+        );
     }
 
     // =========================================
     // DELETE PROJECT
+    // DELETE /api/projects/{id}
     // =========================================
+
     @DeleteMapping("/{id}")
-    public String deleteProject(
+    public ResponseEntity<String> deleteProject(
             @PathVariable Long id) {
 
-        return service.deleteProject(id);
+        System.out.println(
+                "🔥🔥 PROJECT CONTROLLER - DELETE REACHED 🔥🔥"
+        );
+
+        System.out.println(
+                "PROJECT ID: " + id
+        );
+
+        String result =
+                service.deleteProject(id);
+
+        if ("Project not found".equals(result)) {
+
+            return ResponseEntity
+                    .notFound()
+                    .build();
+        }
+
+        return ResponseEntity.ok(result);
     }
 }
+
