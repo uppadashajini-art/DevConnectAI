@@ -17,9 +17,11 @@ public class TaskController {
     @Autowired
     private TaskService service;
 
-    // =========================================
+
+    // =========================================================
     // CREATE TASK
-    // =========================================
+    // =========================================================
+
     @PostMapping
     public Task createTask(
             @RequestBody Task task) {
@@ -27,18 +29,22 @@ public class TaskController {
         return service.createTask(task);
     }
 
-    // =========================================
+
+    // =========================================================
     // GET ALL TASKS
-    // =========================================
+    // =========================================================
+
     @GetMapping
     public List<Task> getAllTasks() {
 
         return service.getAllTasks();
     }
 
-    // =========================================
+
+    // =========================================================
     // GET TASKS BY USER EMAIL
-    // =========================================
+    // =========================================================
+
     @GetMapping("/user/{email}")
     public List<Task> getTasksByUserEmail(
             @PathVariable String email) {
@@ -46,9 +52,23 @@ public class TaskController {
         return service.getAllTasks(email);
     }
 
-    // =========================================
+
+    // =========================================================
+    // GET TASKS BY PROJECT ID
+    // =========================================================
+
+    @GetMapping("/project/{projectId}")
+    public List<Task> getTasksByProjectId(
+            @PathVariable Long projectId) {
+
+        return service.getTasksByProjectId(projectId);
+    }
+
+
+    // =========================================================
     // GET TASK BY ID
-    // =========================================
+    // =========================================================
+
     @GetMapping("/task/{id}")
     public Optional<Task> getTaskById(
             @PathVariable Long id) {
@@ -56,9 +76,11 @@ public class TaskController {
         return service.getTaskById(id);
     }
 
-    // =========================================
+
+    // =========================================================
     // UPDATE TASK
-    // =========================================
+    // =========================================================
+
     @PutMapping("/{id}")
     public Task updateTask(
             @PathVariable Long id,
@@ -67,9 +89,11 @@ public class TaskController {
         return service.updateTask(id, task);
     }
 
-    // =========================================
+
+    // =========================================================
     // DELETE TASK
-    // =========================================
+    // =========================================================
+
     @DeleteMapping("/{id}")
     public String deleteTask(
             @PathVariable Long id) {

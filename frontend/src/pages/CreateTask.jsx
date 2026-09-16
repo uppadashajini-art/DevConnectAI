@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 
 import axios from "../utils/axiosConfig";
@@ -15,25 +16,22 @@ import {
 
 import MainLayout from "../layouts/MainLayout";
 
+
 function CreateTask() {
 
   const navigate = useNavigate();
 
-  // =========================================
-  // ROLE
-  // =========================================
+  // =========================================================
+  // USER INFORMATION
+  // =========================================================
 
   const role = localStorage.getItem("role");
-
-  // =========================================
-  // USER EMAIL
-  // =========================================
-
   const userEmail = localStorage.getItem("email");
 
-  // =========================================
+
+  // =========================================================
   // STATES
-  // =========================================
+  // =========================================================
 
   const [loading, setLoading] = useState(false);
 
@@ -41,85 +39,134 @@ function CreateTask() {
 
   const [teamMembers, setTeamMembers] = useState([]);
 
-  // =========================================
+  const [loadingProjects, setLoadingProjects] = useState(true);
+
+  const [loadingTeam, setLoadingTeam] = useState(true);
+
+
+  // =========================================================
   // TASK STATE
-  // =========================================
+  // =========================================================
 
   const [task, setTask] = useState({
+
     title: "",
+
     description: "",
+
     status: "Pending",
+
     dueDate: "",
+
     assignedTo: "",
-    userEmail: userEmail,
+
+    userEmail: userEmail || "",
+
     projectId: "",
   });
 
-  // =========================================
-  // FETCH DATA
-  // =========================================
+
+  // =========================================================
+  // FETCH PROJECTS + TEAM MEMBERS
+  // =========================================================
 
   useEffect(() => {
-    fetchProjects();
-    fetchTeamMembers();
-  }, []);
 
-  // =========================================
+    if (
+      role === "ADMIN" ||
+      role === "PROJECT_MANAGER"
+    ) {
+
+      fetchProjects();
+
+      fetchTeamMembers();
+
+    }
+
+  }, [role]);
+
+
+  // =========================================================
   // FETCH PROJECTS
-  // =========================================
+  // =========================================================
 
   const fetchProjects = async () => {
 
     try {
 
+      setLoadingProjects(true);
+
       const response = await axios.get("/projects");
 
-      console.log("PROJECTS FROM BACKEND:", response.data);
+      console.log(
+        "PROJECTS FROM BACKEND:",
+        response.data
+      );
 
-      setProjects(response.data || []);
+      setProjects(
+        Array.isArray(response.data)
+          ? response.data
+          : []
+      );
 
     } catch (error) {
 
-      console.error("PROJECT FETCH ERROR:", error);
+      console.error(
+        "PROJECT FETCH ERROR:",
+        error
+      );
+
+      setProjects([]);
+
+    } finally {
+
+      setLoadingProjects(false);
 
     }
   };
 
-  // =========================================
+
+  // =========================================================
   // FETCH TEAM MEMBERS
-  // =========================================
+  // =========================================================
+  //
+  // IMPORTANT:
+  //
+  // We use /team instead of /users.
+  //
+  // Your Team entity has:
+  //
+  // memberName
+  // memberEmail
+  // role
+  // projectName
+  //
+  // =========================================================
 
   const fetchTeamMembers = async () => {
 
     try {
 
-      const response = await axios.get("/users");
+      setLoadingTeam(true);
 
-      console.log("USERS FROM BACKEND:", response.data);
-
-      // =====================================
-      // FILTER TEAM MEMBERS
-      // =====================================
-
-      const members = (response.data || []).filter((user) => {
-
-        const userRole =
-          String(user.role || "")
-            .trim()
-            .toUpperCase();
-
-        return (
-          userRole === "TEAM_MEMBER" ||
-          userRole === "TEAM MEMBER" ||
-          userRole === "MEMBER"
-        );
-
-      });
+      const response = await axios.get("/team");
 
       console.log(
-        "TEAM MEMBERS AFTER FILTER:",
+        "TEAM MEMBERS FROM BACKEND:",
+        response.data
+      );
+
+
+      const members = Array.isArray(response.data)
+        ? response.data
+        : [];
+
+
+      console.log(
+        "TEAM MEMBERS:",
         members
       );
+
 
       setTeamMembers(members);
 
@@ -130,91 +177,178 @@ function CreateTask() {
         error
       );
 
-      alert("Failed to Load Team Members");
+      setTeamMembers([]);
+
+    } finally {
+
+      setLoadingTeam(false);
 
     }
   };
 
-  // =========================================
-  // HANDLE CHANGE
-  // =========================================
+
+  // =========================================================
+  // HANDLE INPUT CHANGE
+  // =========================================================
 
   const handleChange = (e) => {
 
-    setTask({
-      ...task,
-      [e.target.name]: e.target.value,
-    });
+    const {
+      name,
+      value
+    } = e.target;
+
+
+    setTask((previousTask) => ({
+
+      ...previousTask,
+
+      [name]: value,
+
+    }));
 
   };
 
-  // =========================================
-  // HANDLE SUBMIT
-  // =========================================
+
+  // =========================================================
+  // HANDLE CREATE TASK
+  // =========================================================
 
   const handleSubmit = async (e) => {
 
     e.preventDefault();
 
+
+    // -------------------------------------------------------
+    // Prevent double click
+    // -------------------------------------------------------
+
+    if (loading) {
+      return;
+    }
+
+
+    // -------------------------------------------------------
+    // Validate title
+    // -------------------------------------------------------
+
+    if (!task.title.trim()) {
+
+      alert("Please enter task title");
+
+      return;
+    }
+
+
+    // -------------------------------------------------------
+    // Validate description
+    // -------------------------------------------------------
+
+    if (!task.description.trim()) {
+
+      alert("Please enter task description");
+
+      return;
+    }
+
+
+    // -------------------------------------------------------
+    // Validate project
+    // -------------------------------------------------------
+
+    if (!task.projectId) {
+
+      alert("Please select a project");
+
+      return;
+    }
+
+
+    // -------------------------------------------------------
+    // Validate team member
+    // -------------------------------------------------------
+
+    if (!task.assignedTo) {
+
+      alert("Please select a team member");
+
+      return;
+    }
+
+
+    // -------------------------------------------------------
+    // Validate due date
+    // -------------------------------------------------------
+
+    if (!task.dueDate) {
+
+      alert("Please select a due date");
+
+      return;
+    }
+
+
     try {
 
       setLoading(true);
 
-      // =====================================
-      // VALIDATE PROJECT
-      // =====================================
 
-      if (!task.projectId) {
+      // =====================================================
+      // PREPARE DATA FOR BACKEND
+      // =====================================================
 
-        alert("Please select a project");
+      const taskToSend = {
 
-        setLoading(false);
+        title: task.title.trim(),
 
-        return;
-      }
+        description: task.description.trim(),
 
-      // =====================================
-      // VALIDATE TEAM MEMBER
-      // =====================================
+        status: task.status,
 
-      if (!task.assignedTo) {
+        dueDate: task.dueDate,
 
-        alert("Please select a team member");
+        assignedTo: task.assignedTo,
 
-        setLoading(false);
-
-        return;
-      }
-
-      // =====================================
-      // PREPARE TASK
-      // =====================================
-
-      const updatedTask = {
-        ...task,
+        userEmail: userEmail || "",
 
         projectId: Number(task.projectId),
 
-        userEmail: userEmail,
       };
+
 
       console.log(
         "TASK TO SEND:",
-        updatedTask
+        taskToSend
       );
 
-      // =====================================
+
+      // =====================================================
       // CREATE TASK
-      // =====================================
+      // =====================================================
 
-      await axios.post(
+      const response = await axios.post(
         "/tasks",
-        updatedTask
+        taskToSend
       );
+
+
+      console.log(
+        "TASK CREATED:",
+        response.data
+      );
+
+
+      // =====================================================
+      // SUCCESS
+      // =====================================================
 
       alert("Task Created Successfully");
 
+
+      // Go to Tasks page
+
       navigate("/tasks");
+
 
     } catch (error) {
 
@@ -222,6 +356,7 @@ function CreateTask() {
         "TASK CREATION ERROR:",
         error
       );
+
 
       if (error.response) {
 
@@ -237,7 +372,50 @@ function CreateTask() {
 
       }
 
-      alert("Error Creating Task");
+
+      if (
+        error.response &&
+        error.response.status === 400
+      ) {
+
+        alert(
+          "Invalid task data. Please check all fields."
+        );
+
+      } else if (
+        error.response &&
+        error.response.status === 401
+      ) {
+
+        alert(
+          "Your session has expired. Please login again."
+        );
+
+      } else if (
+        error.response &&
+        error.response.status === 403
+      ) {
+
+        alert(
+          "You do not have permission to create tasks."
+        );
+
+      } else if (
+        error.response &&
+        error.response.status === 404
+      ) {
+
+        alert(
+          "Selected project was not found."
+        );
+
+      } else {
+
+        alert(
+          "Error Creating Task"
+        );
+
+      }
 
     } finally {
 
@@ -247,9 +425,10 @@ function CreateTask() {
 
   };
 
-  // =========================================
-  // BLOCK TEAM MEMBER
-  // =========================================
+
+  // =========================================================
+  // ACCESS CONTROL
+  // =========================================================
 
   if (
     role !== "ADMIN" &&
@@ -266,6 +445,7 @@ function CreateTask() {
             justify-center
             items-center
             h-[80vh]
+            px-6
           "
         >
 
@@ -277,6 +457,7 @@ function CreateTask() {
               p-12
               text-center
               max-w-lg
+              w-full
             "
           >
 
@@ -299,6 +480,7 @@ function CreateTask() {
 
             </div>
 
+
             <h1
               className="
                 text-4xl
@@ -312,6 +494,7 @@ function CreateTask() {
 
             </h1>
 
+
             <p
               className="
                 text-gray-500
@@ -320,11 +503,11 @@ function CreateTask() {
               "
             >
 
-              Only Admins and
-              Project Managers
+              Only Admins and Project Managers
               can create tasks.
 
             </p>
+
 
             <button
               onClick={() =>
@@ -356,9 +539,10 @@ function CreateTask() {
 
   }
 
-  // =========================================
+
+  // =========================================================
   // MAIN PAGE
-  // =========================================
+  // =========================================================
 
   return (
 
@@ -370,6 +554,7 @@ function CreateTask() {
           justify-center
           items-center
           py-10
+          px-4
         "
       >
 
@@ -387,9 +572,10 @@ function CreateTask() {
           "
         >
 
-          {/* ================================= */}
+
+          {/* ================================================= */}
           {/* HEADER */}
-          {/* ================================= */}
+          {/* ================================================= */}
 
           <div
             className="
@@ -413,6 +599,7 @@ function CreateTask() {
 
             </div>
 
+
             <div>
 
               <h1
@@ -426,6 +613,7 @@ function CreateTask() {
                 Create Task
 
               </h1>
+
 
               <p
                 className="
@@ -443,9 +631,10 @@ function CreateTask() {
 
           </div>
 
-          {/* ================================= */}
+
+          {/* ================================================= */}
           {/* TASK TITLE */}
-          {/* ================================= */}
+          {/* ================================================= */}
 
           <div className="mb-6">
 
@@ -462,6 +651,7 @@ function CreateTask() {
 
             </label>
 
+
             <div className="relative">
 
               <FaTasks
@@ -472,6 +662,7 @@ function CreateTask() {
                   text-gray-400
                 "
               />
+
 
               <input
                 type="text"
@@ -497,9 +688,10 @@ function CreateTask() {
 
           </div>
 
-          {/* ================================= */}
+
+          {/* ================================================= */}
           {/* DESCRIPTION */}
-          {/* ================================= */}
+          {/* ================================================= */}
 
           <div className="mb-6">
 
@@ -516,6 +708,7 @@ function CreateTask() {
 
             </label>
 
+
             <div className="relative">
 
               <FaAlignLeft
@@ -526,6 +719,7 @@ function CreateTask() {
                   text-gray-400
                 "
               />
+
 
               <textarea
                 name="description"
@@ -551,9 +745,10 @@ function CreateTask() {
 
           </div>
 
-          {/* ================================= */}
+
+          {/* ================================================= */}
           {/* SELECT PROJECT */}
-          {/* ================================= */}
+          {/* ================================================= */}
 
           <div className="mb-6">
 
@@ -570,6 +765,7 @@ function CreateTask() {
 
             </label>
 
+
             <div className="relative">
 
               <FaProjectDiagram
@@ -582,11 +778,13 @@ function CreateTask() {
                 "
               />
 
+
               <select
                 name="projectId"
                 value={task.projectId}
                 onChange={handleChange}
                 required
+                disabled={loadingProjects}
                 className="
                   w-full
                   border
@@ -597,37 +795,63 @@ function CreateTask() {
                   focus:outline-none
                   focus:ring-2
                   focus:ring-blue-500
+                  disabled:bg-gray-100
                 "
               >
 
                 <option value="">
-                  Choose Project
+
+                  {loadingProjects
+                    ? "Loading Projects..."
+                    : "Choose Project"
+                  }
+
                 </option>
 
-                {projects.map(
-                  (project) => (
 
-                    <option
-                      key={project.id}
-                      value={project.id}
-                    >
+                {projects.map((project) => (
 
-                      {project.title}
+                  <option
+                    key={project.id}
+                    value={project.id}
+                  >
 
-                    </option>
+                    {project.title}
 
-                  )
-                )}
+                  </option>
+
+                ))}
 
               </select>
 
             </div>
 
+
+            {/* No projects */}
+
+            {!loadingProjects &&
+              projects.length === 0 && (
+
+                <p
+                  className="
+                    text-red-500
+                    text-sm
+                    mt-2
+                  "
+                >
+
+                  No projects available.
+
+                </p>
+
+              )}
+
           </div>
 
-          {/* ================================= */}
+
+          {/* ================================================= */}
           {/* STATUS */}
-          {/* ================================= */}
+          {/* ================================================= */}
 
           <div className="mb-6">
 
@@ -643,6 +867,7 @@ function CreateTask() {
               Status
 
             </label>
+
 
             <select
               name="status"
@@ -662,24 +887,33 @@ function CreateTask() {
             >
 
               <option value="Pending">
+
                 Pending
+
               </option>
+
 
               <option value="In Progress">
+
                 In Progress
+
               </option>
 
+
               <option value="Completed">
+
                 Completed
+
               </option>
 
             </select>
 
           </div>
 
-          {/* ================================= */}
-          {/* ASSIGN TO */}
-          {/* ================================= */}
+
+          {/* ================================================= */}
+          {/* ASSIGN TO TEAM MEMBER */}
+          {/* ================================================= */}
 
           <div className="mb-6">
 
@@ -696,6 +930,7 @@ function CreateTask() {
 
             </label>
 
+
             <div className="relative">
 
               <FaUser
@@ -708,11 +943,13 @@ function CreateTask() {
                 "
               />
 
+
               <select
                 name="assignedTo"
                 value={task.assignedTo}
                 onChange={handleChange}
                 required
+                disabled={loadingTeam}
                 className="
                   w-full
                   border
@@ -723,63 +960,65 @@ function CreateTask() {
                   focus:outline-none
                   focus:ring-2
                   focus:ring-blue-500
+                  disabled:bg-gray-100
                 "
               >
 
                 <option value="">
-                  Select Team Member
+
+                  {loadingTeam
+                    ? "Loading Team Members..."
+                    : "Select Team Member"
+                  }
+
                 </option>
 
-                {teamMembers.map(
-                  (member) => (
 
-                    <option
-                      key={member.id}
-                      value={member.email}
-                    >
+                {teamMembers.map((member) => (
 
-                      {member.name || "Unknown User"}
+                  <option
+                    key={member.id}
+                    value={member.memberEmail}
+                  >
 
-                      {" "}
+                    {member.memberName}
+                    {" - "}
+                    {member.role}
 
-                      (
-                      {member.email}
-                      )
+                  </option>
 
-                    </option>
-
-                  )
-                )}
+                ))}
 
               </select>
 
             </div>
 
-            {/* ================================= */}
-            {/* NO TEAM MEMBERS MESSAGE */}
-            {/* ================================= */}
 
-            {teamMembers.length === 0 && (
+            {/* No team members */}
 
-              <p
-                className="
-                  text-red-500
-                  text-sm
-                  mt-2
-                "
-              >
+            {!loadingTeam &&
+              teamMembers.length === 0 && (
 
-                No team members available.
+                <p
+                  className="
+                    text-red-500
+                    text-sm
+                    mt-2
+                  "
+                >
 
-              </p>
+                  No team members available.
 
-            )}
+                </p>
+
+              )}
 
           </div>
 
-          {/* ================================= */}
+
+          {/* ================================================= */}
           {/* DUE DATE */}
-          {/* ================================= */}
+          {/* ================================================= */}
 
           <div className="mb-8">
 
@@ -796,6 +1035,7 @@ function CreateTask() {
 
             </label>
 
+
             <div className="relative">
 
               <FaCalendarAlt
@@ -806,6 +1046,7 @@ function CreateTask() {
                   text-gray-400
                 "
               />
+
 
               <input
                 type="date"
@@ -830,18 +1071,24 @@ function CreateTask() {
 
           </div>
 
-          {/* ================================= */}
+
+          {/* ================================================= */}
           {/* CREATE BUTTON */}
-          {/* ================================= */}
+          {/* ================================================= */}
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={
+              loading ||
+              projects.length === 0 ||
+              teamMembers.length === 0
+            }
             className="
               w-full
               bg-blue-600
               hover:bg-blue-700
               disabled:bg-blue-300
+              disabled:cursor-not-allowed
               text-white
               py-4
               rounded-2xl
@@ -866,6 +1113,8 @@ function CreateTask() {
     </MainLayout>
 
   );
+
 }
+
 
 export default CreateTask;
