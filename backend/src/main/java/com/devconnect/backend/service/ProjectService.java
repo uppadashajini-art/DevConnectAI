@@ -4,7 +4,6 @@ package com.devconnect.backend.service;
 import com.devconnect.backend.entity.Activity;
 import com.devconnect.backend.entity.Notification;
 import com.devconnect.backend.entity.Project;
-
 import com.devconnect.backend.repository.ActivityRepository;
 import com.devconnect.backend.repository.NotificationRepository;
 import com.devconnect.backend.repository.ProjectRepository;
@@ -27,42 +26,43 @@ public class ProjectService {
     @Autowired
     private NotificationRepository notificationRepository;
 
-
-    // =========================================================
+    // =========================================
     // CREATE PROJECT
-    // =========================================================
+    // =========================================
 
     public Project createProject(Project project) {
 
-        // New project starts with zero tasks
+        // Default total tasks
         if (project.getTotalTasks() == null) {
             project.setTotalTasks(0);
         }
 
+        // Default completed tasks
         if (project.getCompletedTasks() == null) {
             project.setCompletedTasks(0);
         }
 
+        // Default priority
         if (project.getPriority() == null
                 || project.getPriority().isBlank()) {
 
             project.setPriority("MEDIUM");
         }
 
+        // Default status
         if (project.getStatus() == null
                 || project.getStatus().isBlank()) {
 
             project.setStatus("Pending");
         }
 
-
         // Save project
-        Project savedProject = repository.save(project);
+        Project savedProject =
+                repository.save(project);
 
-
-        // =====================================================
-        // SAVE ACTIVITY
-        // =====================================================
+        // =====================================
+        // ACTIVITY
+        // =====================================
 
         Activity activity = new Activity();
 
@@ -77,12 +77,12 @@ public class ProjectService {
 
         activityRepository.save(activity);
 
+        // =====================================
+        // NOTIFICATION
+        // =====================================
 
-        // =====================================================
-        // SAVE NOTIFICATION
-        // =====================================================
-
-        Notification notification = new Notification();
+        Notification notification =
+                new Notification();
 
         notification.setTitle("Project Created");
 
@@ -97,35 +97,33 @@ public class ProjectService {
 
         notificationRepository.save(notification);
 
-
         return savedProject;
     }
 
-
-    // =========================================================
+    // =========================================
     // GET ALL PROJECTS
-    // =========================================================
+    // =========================================
 
     public List<Project> getAllProjects() {
 
         return repository.findAll();
     }
 
-
-    // =========================================================
+    // =========================================
     // GET PROJECTS BY USER EMAIL
-    // =========================================================
+    // =========================================
 
     public List<Project> getAllProjects(
             String userEmail) {
 
-        return repository.findByUserEmail(userEmail);
+        return repository.findByUserEmail(
+                userEmail
+        );
     }
 
-
-    // =========================================================
+    // =========================================
     // GET PROJECT BY ID
-    // =========================================================
+    // =========================================
 
     public Optional<Project> getProjectById(
             Long id) {
@@ -133,52 +131,68 @@ public class ProjectService {
         return repository.findById(id);
     }
 
-
-    // =========================================================
+    // =========================================
     // UPDATE PROJECT
-    // =========================================================
+    // =========================================
 
     public Project updateProject(
             Long id,
             Project updatedProject) {
 
-        Project project = repository
-                .findById(id)
-                .orElse(null);
+        // Find existing project
+        Project project =
+                repository.findById(id)
+                        .orElse(null);
 
+        // Project does not exist
         if (project == null) {
             return null;
         }
 
+        // =====================================
+        // UPDATE BASIC PROJECT DETAILS
+        // =====================================
 
-        // =====================================================
-        // UPDATE BASIC PROJECT INFORMATION
-        // =====================================================
+        if (updatedProject.getTitle() != null
+                && !updatedProject.getTitle().isBlank()) {
 
-        project.setTitle(
-                updatedProject.getTitle()
-        );
+            project.setTitle(
+                    updatedProject.getTitle()
+            );
+        }
 
-        project.setDescription(
-                updatedProject.getDescription()
-        );
+        if (updatedProject.getDescription() != null
+                && !updatedProject.getDescription().isBlank()) {
 
-        project.setTechStack(
-                updatedProject.getTechStack()
-        );
+            project.setDescription(
+                    updatedProject.getDescription()
+            );
+        }
 
-        project.setUserEmail(
-                updatedProject.getUserEmail()
-        );
+        if (updatedProject.getTechStack() != null
+                && !updatedProject.getTechStack().isBlank()) {
 
-        project.setDeadline(
-                updatedProject.getDeadline()
-        );
+            project.setTechStack(
+                    updatedProject.getTechStack()
+            );
+        }
 
+        // =====================================
+        // DEADLINE
+        // Preserve existing value if not sent
+        // =====================================
 
-        // =====================================================
-        // UPDATE PRIORITY
-        // =====================================================
+        if (updatedProject.getDeadline() != null
+                && !updatedProject.getDeadline().isBlank()) {
+
+            project.setDeadline(
+                    updatedProject.getDeadline()
+            );
+        }
+
+        // =====================================
+        // PRIORITY
+        // =====================================
 
         if (updatedProject.getPriority() != null
                 && !updatedProject.getPriority().isBlank()) {
@@ -188,10 +202,9 @@ public class ProjectService {
             );
         }
 
-
-        // =====================================================
-        // UPDATE PROJECT STATUS
-        // =====================================================
+        // =====================================
+        // STATUS
+        // =====================================
 
         if (updatedProject.getStatus() != null
                 && !updatedProject.getStatus().isBlank()) {
@@ -201,38 +214,55 @@ public class ProjectService {
             );
         }
 
+        // =====================================
+        // USER EMAIL
+        // Preserve existing value if not sent
+        // =====================================
 
-        // =====================================================
-        // IMPORTANT
-        // =====================================================
-        // Do NOT update totalTasks and completedTasks here.
-        //
-        // These values are controlled automatically by
-        // TaskService whenever a task is:
-        //
-        // CREATE
-        // UPDATE
-        // DELETE
-        //
-        // This prevents incorrect project progress.
-        // =====================================================
+        if (updatedProject.getUserEmail() != null
+                && !updatedProject.getUserEmail().isBlank()) {
 
+            project.setUserEmail(
+                    updatedProject.getUserEmail()
+            );
+        }
 
-        // Save updated project
+        // =====================================
+        // TASK COUNTS
+        // Only update if values are provided
+        // =====================================
 
-        Project updated = repository.save(project);
+        if (updatedProject.getTotalTasks() != null) {
 
+            project.setTotalTasks(
+                    updatedProject.getTotalTasks()
+            );
+        }
 
-        // =====================================================
-        // SAVE ACTIVITY
-        // =====================================================
+        if (updatedProject.getCompletedTasks() != null) {
+
+            project.setCompletedTasks(
+                    updatedProject.getCompletedTasks()
+            );
+        }
+
+        // =====================================
+        // SAVE UPDATED PROJECT
+        // =====================================
+
+        Project updated =
+                repository.save(project);
+
+        // =====================================
+        // ACTIVITY
+        // =====================================
 
         Activity activity = new Activity();
 
         activity.setTitle("Project Updated");
 
         activity.setDescription(
-                project.getTitle()
+                updated.getTitle()
                         + " project was updated"
         );
 
@@ -240,17 +270,17 @@ public class ProjectService {
 
         activityRepository.save(activity);
 
+        // =====================================
+        // NOTIFICATION
+        // =====================================
 
-        // =====================================================
-        // SAVE NOTIFICATION
-        // =====================================================
-
-        Notification notification = new Notification();
+        Notification notification =
+                new Notification();
 
         notification.setTitle("Project Updated");
 
         notification.setMessage(
-                project.getTitle()
+                updated.getTitle()
                         + " project was updated"
         );
 
@@ -260,40 +290,30 @@ public class ProjectService {
 
         notificationRepository.save(notification);
 
-
         return updated;
     }
 
-
-    // =========================================================
+    // =========================================
     // DELETE PROJECT
-    // =========================================================
+    // =========================================
 
     public String deleteProject(Long id) {
 
-        // =====================================================
-        // CHECK PROJECT EXISTS
-        // =====================================================
+        Project project =
+                repository.findById(id)
+                        .orElse(null);
 
-        Project project = repository
-                .findById(id)
-                .orElse(null);
-
+        // Project not found
         if (project == null) {
             return "Project not found";
         }
 
-
-        // =====================================================
-        // DELETE PROJECT
-        // =====================================================
-
+        // Delete project
         repository.deleteById(id);
 
-
-        // =====================================================
-        // SAVE ACTIVITY
-        // =====================================================
+        // =====================================
+        // ACTIVITY
+        // =====================================
 
         Activity activity = new Activity();
 
@@ -308,12 +328,12 @@ public class ProjectService {
 
         activityRepository.save(activity);
 
+        // =====================================
+        // NOTIFICATION
+        // =====================================
 
-        // =====================================================
-        // SAVE NOTIFICATION
-        // =====================================================
-
-        Notification notification = new Notification();
+        Notification notification =
+                new Notification();
 
         notification.setTitle("Project Deleted");
 
@@ -327,7 +347,6 @@ public class ProjectService {
         notification.setTime("Just Now");
 
         notificationRepository.save(notification);
-
 
         return "Project Deleted Successfully";
     }
