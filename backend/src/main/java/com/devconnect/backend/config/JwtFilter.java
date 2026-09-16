@@ -1,3 +1,4 @@
+
 package com.devconnect.backend.config;
 
 import com.devconnect.backend.entity.User;
@@ -41,7 +42,9 @@ public class JwtFilter extends OncePerRequestFilter {
         // ALLOW OPTIONS REQUEST
         // =========================================
         if (request.getMethod().equalsIgnoreCase("OPTIONS")) {
+
             filterChain.doFilter(request, response);
+
             return;
         }
 
@@ -53,6 +56,7 @@ public class JwtFilter extends OncePerRequestFilter {
                 || path.equals("/api/users")) {
 
             filterChain.doFilter(request, response);
+
             return;
         }
 
@@ -68,7 +72,17 @@ public class JwtFilter extends OncePerRequestFilter {
         if (authHeader == null
                 || !authHeader.startsWith("Bearer ")) {
 
+            System.out.println("================================");
+            System.out.println("JWT FILTER");
+            System.out.println("REQUEST PATH: "
+                    + request.getRequestURI());
+            System.out.println("REQUEST METHOD: "
+                    + request.getMethod());
+            System.out.println("NO JWT TOKEN");
+            System.out.println("================================");
+
             filterChain.doFilter(request, response);
+
             return;
         }
 
@@ -81,6 +95,13 @@ public class JwtFilter extends OncePerRequestFilter {
         // VALIDATE TOKEN
         // =========================================
         if (!JwtUtil.validateToken(token)) {
+
+            System.out.println("================================");
+            System.out.println("JWT FILTER");
+            System.out.println("INVALID JWT TOKEN");
+            System.out.println("REQUEST PATH: "
+                    + request.getRequestURI());
+            System.out.println("================================");
 
             response.setStatus(
                     HttpServletResponse.SC_UNAUTHORIZED
@@ -99,8 +120,15 @@ public class JwtFilter extends OncePerRequestFilter {
         String email;
 
         try {
+
             email = JwtUtil.extractEmail(token);
+
         } catch (Exception e) {
+
+            System.out.println("================================");
+            System.out.println("JWT FILTER");
+            System.out.println("FAILED TO EXTRACT EMAIL");
+            System.out.println("================================");
 
             response.setStatus(
                     HttpServletResponse.SC_UNAUTHORIZED
@@ -121,7 +149,16 @@ public class JwtFilter extends OncePerRequestFilter {
                         .findByEmail(email)
                         .orElse(null);
 
+        // =========================================
+        // USER NOT FOUND
+        // =========================================
         if (user == null) {
+
+            System.out.println("================================");
+            System.out.println("JWT FILTER");
+            System.out.println("USER NOT FOUND");
+            System.out.println("EMAIL: " + email);
+            System.out.println("================================");
 
             response.setStatus(
                     HttpServletResponse.SC_UNAUTHORIZED
@@ -140,11 +177,31 @@ public class JwtFilter extends OncePerRequestFilter {
         String userRole = user.getRole();
 
         // =========================================
-        // CREATE SPRING SECURITY ROLE
+        // CREATE SPRING SECURITY AUTHORITY
         // =========================================
         String authority =
                 "ROLE_" + userRole;
 
+        // =========================================
+        // DEBUG LOGGING
+        // =========================================
+        System.out.println("================================");
+        System.out.println("JWT FILTER");
+        System.out.println("REQUEST METHOD: "
+                + request.getMethod());
+        System.out.println("REQUEST PATH: "
+                + request.getRequestURI());
+        System.out.println("JWT USER EMAIL: "
+                + email);
+        System.out.println("DATABASE ROLE: "
+                + userRole);
+        System.out.println("CREATED AUTHORITY: "
+                + authority);
+        System.out.println("================================");
+
+        // =========================================
+        // CREATE AUTHENTICATION
+        // =========================================
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
                         user,
@@ -170,6 +227,14 @@ public class JwtFilter extends OncePerRequestFilter {
         SecurityContextHolder
                 .getContext()
                 .setAuthentication(authentication);
+
+        // =========================================
+        // PRINT SPRING AUTHORITIES
+        // =========================================
+        System.out.println(
+                "SPRING AUTHORITIES: "
+                        + authentication.getAuthorities()
+        );
 
         // =========================================
         // CONTINUE REQUEST
