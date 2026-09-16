@@ -23,10 +23,25 @@ function EditProject() {
 
   const navigate = useNavigate();
 
+  // =========================================
   // GET ROLE
-  const role = localStorage.getItem("role");
+  // =========================================
 
+  const storedRole =
+    localStorage.getItem("role");
+
+  // Convert role to uppercase
+  // ADMIN / admin / Admin -> ADMIN
+  const role =
+    storedRole?.trim().toUpperCase();
+
+  console.log("EDIT PROJECT ROLE:", role);
+  console.log("PROJECT ID:", id);
+
+  // =========================================
   // STATES
+  // =========================================
+
   const [title, setTitle] = useState("");
 
   const [description, setDescription] =
@@ -38,27 +53,82 @@ function EditProject() {
   const [loading, setLoading] =
     useState(false);
 
+  const [fetching, setFetching] =
+    useState(true);
+
   // =========================================
   // FETCH PROJECT
   // =========================================
 
   const fetchProject = useCallback(async () => {
     try {
+      setFetching(true);
+
+      /*
+       * IMPORTANT:
+       *
+       * axiosConfig baseURL already contains /api
+       *
+       * baseURL:
+       * https://devconnectai.onrender.com/api
+       *
+       * Therefore:
+       *
+       * "/projects/1"
+       *
+       * becomes:
+       *
+       * https://devconnectai.onrender.com/api/projects/1
+       *
+       * DO NOT write /api/projects/1 here.
+       */
+
       const response = await axios.get(
-        `/api/projects/${id}`
+        `/projects/${id}`
       );
 
-      setTitle(response.data.title);
+      console.log(
+        "PROJECT FETCH RESPONSE:",
+        response.data
+      );
+
+      setTitle(
+        response.data.title || ""
+      );
 
       setDescription(
-        response.data.description
+        response.data.description || ""
       );
 
       setTechStack(
-        response.data.techStack
+        response.data.techStack || ""
       );
+
     } catch (error) {
-      console.log(error);
+
+      console.error(
+        "FETCH PROJECT ERROR:",
+        error
+      );
+
+      console.error(
+        "STATUS:",
+        error.response?.status
+      );
+
+      console.error(
+        "DATA:",
+        error.response?.data
+      );
+
+      alert(
+        "Unable to load project"
+      );
+
+    } finally {
+
+      setFetching(false);
+
     }
   }, [id]);
 
@@ -67,26 +137,71 @@ function EditProject() {
   // =========================================
 
   useEffect(() => {
-    fetchProject();
-  }, [fetchProject]);
+
+    if (id) {
+      fetchProject();
+    }
+
+  }, [fetchProject, id]);
 
   // =========================================
   // UPDATE PROJECT
   // =========================================
 
   const handleUpdate = async (e) => {
+
     e.preventDefault();
 
+    if (!title.trim()) {
+      alert("Project title is required");
+      return;
+    }
+
+    if (!description.trim()) {
+      alert("Project description is required");
+      return;
+    }
+
+    if (!techStack.trim()) {
+      alert("Tech stack is required");
+      return;
+    }
+
     try {
+
       setLoading(true);
 
-      await axios.put(
-        `/api/projects/${id}`,
-        {
-          title,
-          description,
-          techStack,
-        }
+      const projectData = {
+        title: title.trim(),
+        description: description.trim(),
+        techStack: techStack.trim(),
+      };
+
+      console.log(
+        "UPDATING PROJECT:",
+        projectData
+      );
+
+      /*
+       * IMPORTANT:
+       *
+       * Correct:
+       * /projects/${id}
+       *
+       * Axios automatically adds /api
+       *
+       * Final URL:
+       * /api/projects/${id}
+       */
+
+      const response = await axios.put(
+        `/projects/${id}`,
+        projectData
+      );
+
+      console.log(
+        "UPDATE RESPONSE:",
+        response.data
       );
 
       alert(
@@ -94,39 +209,120 @@ function EditProject() {
       );
 
       navigate("/projects");
-    } catch (error) {
-      console.log(error);
 
-      alert(
-        "Error Updating Project"
+    } catch (error) {
+
+      console.error(
+        "UPDATE PROJECT ERROR:",
+        error
       );
+
+      console.error(
+        "STATUS:",
+        error.response?.status
+      );
+
+      console.error(
+        "DATA:",
+        error.response?.data
+      );
+
+      if (error.response?.status === 403) {
+
+        alert(
+          "Access denied. Please login again."
+        );
+
+      } else if (error.response?.status === 404) {
+
+        alert(
+          "Project not found."
+        );
+
+      } else {
+
+        alert(
+          "Error Updating Project"
+        );
+
+      }
+
     } finally {
+
       setLoading(false);
+
     }
   };
 
   // =========================================
-  // BLOCK TEAM MEMBER
+  // BLOCK UNAUTHORIZED USERS
   // =========================================
 
   if (
     role !== "ADMIN" &&
     role !== "PROJECT_MANAGER"
   ) {
+
     return (
       <MainLayout>
-        <div className="flex justify-center items-center h-[80vh]">
-          <div className="bg-white rounded-3xl shadow-xl p-12 text-center max-w-lg">
 
-            <div className="bg-red-100 text-red-600 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+        <div
+          className="
+            flex
+            justify-center
+            items-center
+            h-[80vh]
+          "
+        >
+
+          <div
+            className="
+              bg-white
+              rounded-3xl
+              shadow-xl
+              p-12
+              text-center
+              max-w-lg
+            "
+          >
+
+            <div
+              className="
+                bg-red-100
+                text-red-600
+                w-24
+                h-24
+                rounded-full
+                flex
+                items-center
+                justify-center
+                mx-auto
+                mb-6
+              "
+            >
+
               <FaLock className="text-4xl" />
+
             </div>
 
-            <h1 className="text-4xl font-bold text-slate-900 mb-4">
+            <h1
+              className="
+                text-4xl
+                font-bold
+                text-slate-900
+                mb-4
+              "
+            >
               Access Denied
             </h1>
 
-            <p className="text-gray-500 text-lg mb-8">
+            <p
+              className="
+                text-gray-500
+                text-lg
+                mb-8
+              "
+            >
               Only Admins and Project Managers
               can edit projects.
             </p>
@@ -135,13 +331,58 @@ function EditProject() {
               onClick={() =>
                 navigate("/dashboard")
               }
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-semibold transition"
+              className="
+                bg-blue-600
+                hover:bg-blue-700
+                text-white
+                px-8
+                py-4
+                rounded-2xl
+                font-semibold
+                transition
+              "
             >
               Back to Dashboard
             </button>
 
           </div>
+
         </div>
+
+      </MainLayout>
+    );
+  }
+
+  // =========================================
+  // LOADING PROJECT
+  // =========================================
+
+  if (fetching) {
+
+    return (
+      <MainLayout>
+
+        <div
+          className="
+            flex
+            justify-center
+            items-center
+            h-[70vh]
+          "
+        >
+
+          <div
+            className="
+              text-center
+              text-gray-500
+              text-xl
+            "
+          >
+            Loading project...
+          </div>
+
+        </div>
+
       </MainLayout>
     );
   }
@@ -151,45 +392,111 @@ function EditProject() {
   // =========================================
 
   return (
+
     <MainLayout>
-      <div className="flex justify-center items-center py-10">
+
+      <div
+        className="
+          flex
+          justify-center
+          items-center
+          py-10
+        "
+      >
 
         <form
           onSubmit={handleUpdate}
-          className="bg-white rounded-3xl shadow-xl border border-gray-100 p-10 w-full max-w-2xl"
+          className="
+            bg-white
+            rounded-3xl
+            shadow-xl
+            border
+            border-gray-100
+            p-10
+            w-full
+            max-w-2xl
+          "
         >
 
-          {/* HEADER */}
+          {/* =========================
+              HEADER
+          ========================= */}
 
-          <div className="flex items-center gap-4 mb-10">
+          <div
+            className="
+              flex
+              items-center
+              gap-4
+              mb-10
+            "
+          >
 
-            <div className="bg-yellow-100 text-yellow-600 p-5 rounded-3xl">
+            <div
+              className="
+                bg-yellow-100
+                text-yellow-600
+                p-5
+                rounded-3xl
+              "
+            >
+
               <FaEdit className="text-3xl" />
+
             </div>
 
             <div>
-              <h1 className="text-5xl font-bold text-slate-900">
+
+              <h1
+                className="
+                  text-5xl
+                  font-bold
+                  text-slate-900
+                "
+              >
                 Edit Project
               </h1>
 
-              <p className="text-gray-500 mt-2 text-lg">
+              <p
+                className="
+                  text-gray-500
+                  mt-2
+                  text-lg
+                "
+              >
                 Update your project information
               </p>
+
             </div>
 
           </div>
 
-          {/* TITLE */}
+          {/* =========================
+              TITLE
+          ========================= */}
 
           <div className="mb-6">
 
-            <label className="block mb-3 font-semibold text-slate-700">
+            <label
+              className="
+                block
+                mb-3
+                font-semibold
+                text-slate-700
+              "
+            >
               Project Title
             </label>
 
             <div className="relative">
 
-              <FaProjectDiagram className="absolute left-4 top-5 text-gray-400" />
+              <FaProjectDiagram
+                className="
+                  absolute
+                  left-4
+                  top-5
+                  text-gray-400
+                "
+              />
 
               <input
                 type="text"
@@ -198,24 +505,51 @@ function EditProject() {
                 onChange={(e) =>
                   setTitle(e.target.value)
                 }
-                className="w-full border border-gray-200 pl-12 p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                className="
+                  w-full
+                  border
+                  border-gray-200
+                  pl-12
+                  p-4
+                  rounded-2xl
+                  focus:outline-none
+                  focus:ring-2
+                  focus:ring-yellow-500
+                "
                 required
               />
 
             </div>
+
           </div>
 
-          {/* DESCRIPTION */}
+          {/* =========================
+              DESCRIPTION
+          ========================= */}
 
           <div className="mb-6">
 
-            <label className="block mb-3 font-semibold text-slate-700">
+            <label
+              className="
+                block
+                mb-3
+                font-semibold
+                text-slate-700
+              "
+            >
               Description
             </label>
 
             <div className="relative">
 
-              <FaAlignLeft className="absolute left-4 top-5 text-gray-400" />
+              <FaAlignLeft
+                className="
+                  absolute
+                  left-4
+                  top-5
+                  text-gray-400
+                "
+              />
 
               <textarea
                 placeholder="Project Description"
@@ -226,24 +560,51 @@ function EditProject() {
                   )
                 }
                 rows="5"
-                className="w-full border border-gray-200 pl-12 p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                className="
+                  w-full
+                  border
+                  border-gray-200
+                  pl-12
+                  p-4
+                  rounded-2xl
+                  focus:outline-none
+                  focus:ring-2
+                  focus:ring-yellow-500
+                "
                 required
               />
 
             </div>
+
           </div>
 
-          {/* TECH STACK */}
+          {/* =========================
+              TECH STACK
+          ========================= */}
 
           <div className="mb-8">
 
-            <label className="block mb-3 font-semibold text-slate-700">
+            <label
+              className="
+                block
+                mb-3
+                font-semibold
+                text-slate-700
+              "
+            >
               Tech Stack
             </label>
 
             <div className="relative">
 
-              <FaCode className="absolute left-4 top-5 text-gray-400" />
+              <FaCode
+                className="
+                  absolute
+                  left-4
+                  top-5
+                  text-gray-400
+                "
+              />
 
               <input
                 type="text"
@@ -254,30 +615,81 @@ function EditProject() {
                     e.target.value
                   )
                 }
-                className="w-full border border-gray-200 pl-12 p-4 rounded-2xl focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                className="
+                  w-full
+                  border
+                  border-gray-200
+                  pl-12
+                  p-4
+                  rounded-2xl
+                  focus:outline-none
+                  focus:ring-2
+                  focus:ring-yellow-500
+                "
                 required
               />
 
             </div>
+
           </div>
 
-          {/* BUTTON */}
+          {/* =========================
+              BUTTONS
+          ========================= */}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-yellow-500 hover:bg-yellow-600 disabled:bg-yellow-300 text-white py-4 rounded-2xl text-lg font-semibold shadow-lg transition"
-          >
-            {loading
-              ? "Updating Project..."
-              : "Update Project"}
-          </button>
+          <div className="flex gap-4">
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="
+                flex-1
+                bg-yellow-500
+                hover:bg-yellow-600
+                disabled:bg-yellow-300
+                text-white
+                py-4
+                rounded-2xl
+                text-lg
+                font-semibold
+                shadow-lg
+                transition
+              "
+            >
+
+              {loading
+                ? "Updating Project..."
+                : "Update Project"}
+
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                navigate("/projects")
+              }
+              className="
+                px-8
+                py-4
+                rounded-2xl
+                bg-gray-500
+                hover:bg-gray-600
+                text-white
+                font-semibold
+              "
+            >
+              Cancel
+            </button>
+
+          </div>
 
         </form>
 
       </div>
+
     </MainLayout>
   );
 }
 
 export default EditProject;
+
