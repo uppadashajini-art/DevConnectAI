@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 import { useCallback, useEffect, useState } from "react";
 import axios from "../utils/axiosConfig";
@@ -34,6 +35,7 @@ function Dashboard() {
 
   const role = localStorage.getItem("role");
   const userName = localStorage.getItem("name");
+  const userEmail = localStorage.getItem("email");
 
   const [stats, setStats] = useState({
     projects: 0,
@@ -51,76 +53,144 @@ function Dashboard() {
 
   const fetchDashboardData = useCallback(async () => {
     try {
-      const email = localStorage.getItem("email");
+      console.log("=================================");
+      console.log("FETCHING DASHBOARD DATA");
+      console.log("ROLE:", role);
+      console.log("EMAIL:", userEmail);
+      console.log("=================================");
 
       let projectResponse;
       let taskResponse;
 
       // =========================================
-      // ADMIN & PROJECT_MANAGER
+      // ADMIN & PROJECT MANAGER
       // =========================================
 
       if (
         role === "ADMIN" ||
         role === "PROJECT_MANAGER"
       ) {
+        projectResponse = await axios.get("/projects");
+
+        taskResponse = await axios.get("/tasks");
+      }
+
+      // =========================================
+      // TEAM MEMBER
+      // =========================================
+
+      else if (role === "TEAM_MEMBER") {
         projectResponse = await axios.get(
-          "/projects"
+          `/projects/user/${encodeURIComponent(userEmail)}`
         );
 
         taskResponse = await axios.get(
-          "/tasks"
+          `/tasks/user/${encodeURIComponent(userEmail)}`
         );
       }
 
       // =========================================
-      // TEAM_MEMBER
+      // UNKNOWN ROLE
       // =========================================
 
       else {
-        projectResponse = await axios.get(
-          `/api/projects/${email}`
-        );
-
-        taskResponse = await axios.get(
-          `/api/tasks/${email}`
-        );
+        console.log("Unknown role:", role);
+        return;
       }
 
-      const teamResponse = await axios.get(
-        "/team"
-      );
+      // =========================================
+      // TEAM
+      // =========================================
+
+      const teamResponse = await axios.get("/team");
+
+      // =========================================
+      // ACTIVITIES
+      // =========================================
 
       const activityResponse = await axios.get(
         "/activities"
       );
 
-      let projects = projectResponse.data || [];
-      let tasks = taskResponse.data || [];
+      // =========================================
+      // GET DATA
+      // =========================================
+
+      let projects = Array.isArray(projectResponse.data)
+        ? projectResponse.data
+        : [];
+
+      let tasks = Array.isArray(taskResponse.data)
+        ? taskResponse.data
+        : [];
+
+      const team = Array.isArray(teamResponse.data)
+        ? teamResponse.data
+        : [];
+
+      const activitiesData = Array.isArray(
+        activityResponse.data
+      )
+        ? activityResponse.data
+        : [];
+
+      console.log(
+        "================================="
+      );
+      console.log("PROJECT DATA FROM BACKEND:");
+      console.log(projects);
+      console.log(
+        "PROJECT COUNT:",
+        projects.length
+      );
+
+      console.log(
+        "TASK DATA FROM BACKEND:"
+      );
+      console.log(tasks);
+      console.log(
+        "TASK COUNT:",
+        tasks.length
+      );
+
+      console.log(
+        "TEAM DATA FROM BACKEND:"
+      );
+      console.log(team);
+      console.log(
+        "TEAM COUNT:",
+        team.length
+      );
+
+      console.log(
+        "================================="
+      );
 
       // =========================================
       // TEAM MEMBER FILTER
       // =========================================
 
       if (role === "TEAM_MEMBER") {
-        tasks = tasks.filter(
-          (task) =>
+        // Keep only tasks assigned to this user.
+        // Your Task entity stores assignedTo.
+        tasks = tasks.filter((task) => {
+          return (
+            task.assignedTo === userEmail ||
             task.assignedTo === userName
-        );
+          );
+        });
 
+        // Find projects from those tasks
         const projectIds = [
           ...new Set(
-            tasks.map((task) =>
-              Number(task.projectId)
-            )
+            tasks
+              .map((task) => Number(task.projectId))
+              .filter((id) => !Number.isNaN(id))
           ),
         ];
 
-        projects = projects.filter(
-          (project) =>
-            projectIds.includes(
-              Number(project.id)
-            )
+        projects = projects.filter((project) =>
+          projectIds.includes(Number(project.id))
         );
       }
 
@@ -130,18 +200,50 @@ function Dashboard() {
 
       const completedTasks = tasks.filter(
         (task) =>
-          task.status === "Completed"
+          task.status?.toLowerCase() ===
+          "completed"
       );
 
       const pendingTasks = tasks.filter(
         (task) =>
-          task.status === "Pending"
+          task.status?.toLowerCase() ===
+          "pending"
       );
 
       const inProgressTasks = tasks.filter(
         (task) =>
-          task.status === "In Progress"
+          task.status?.toLowerCase() ===
+          "in progress"
       );
+
+      // =========================================
+      // TEAM COUNT
+      // =========================================
+
+      let teamCount = team.length;
+
+      /*
+       * For TEAM_MEMBER, show the team members
+       * belonging to the same project(s).
+       *
+       * For ADMIN / PROJECT_MANAGER, show all
+       * team members.
+       */
+
+      if (role === "TEAM_MEMBER") {
+        const projectNames = projects
+          .map((project) => project.title)
+          .filter(Boolean);
+
+        const filteredTeam = team.filter(
+          (member) =>
+            projectNames.includes(
+              member.projectName
+            )
+        );
+
+        teamCount = filteredTeam.length;
+      }
 
       // =========================================
       // UPDATE STATS
@@ -151,7 +253,7 @@ function Dashboard() {
         projects: projects.length,
         tasks: tasks.length,
         completed: completedTasks.length,
-        team: teamResponse.data.length,
+        team: teamCount,
       });
 
       // =========================================
@@ -177,16 +279,44 @@ function Dashboard() {
       // UPDATE ACTIVITIES
       // =========================================
 
-      setActivities(
-        activityResponse.data || []
+      setActivities(activitiesData);
+
+      console.log(
+        "================================="
       );
+      console.log("FINAL DASHBOARD STATS:");
+      console.log({
+        projects: projects.length,
+        tasks: tasks.length,
+        completed: completedTasks.length,
+        team: teamCount,
+      });
+      console.log(
+        "================================="
+      );
+
     } catch (error) {
-      console.log(error);
+      console.error(
+        "DASHBOARD ERROR:",
+        error
+      );
+
+      if (error.response) {
+        console.error(
+          "STATUS:",
+          error.response.status
+        );
+
+        console.error(
+          "DATA:",
+          error.response.data
+        );
+      }
     }
-  }, [role, userName]);
+  }, [role, userEmail, userName]);
 
   // =========================================
-  // LOAD DASHBOARD DATA
+  // LOAD DASHBOARD
   // =========================================
 
   useEffect(() => {
@@ -194,7 +324,7 @@ function Dashboard() {
   }, [fetchDashboardData]);
 
   // =========================================
-  // PROGRESS
+  // PROJECT PROGRESS
   // =========================================
 
   const progress =
@@ -202,16 +332,26 @@ function Dashboard() {
       ? (stats.completed / stats.tasks) * 100
       : 0;
 
+  // =========================================
+  // PIE COLORS
+  // =========================================
+
   const COLORS = [
     "#facc15",
     "#3b82f6",
     "#22c55e",
   ];
 
+  // =========================================
+  // UI
+  // =========================================
+
   return (
     <MainLayout>
 
-      {/* WELCOME SECTION */}
+      {/* =====================================
+          WELCOME SECTION
+      ===================================== */}
 
       <div
         className="
@@ -264,9 +404,7 @@ function Dashboard() {
             {role === "ADMIN" && (
               <button
                 onClick={() =>
-                  navigate(
-                    "/create-project"
-                  )
+                  navigate("/create-project")
                 }
                 className="
                   bg-white
@@ -275,6 +413,8 @@ function Dashboard() {
                   py-3
                   rounded-2xl
                   font-semibold
+                  hover:bg-blue-50
+                  transition
                 "
               >
                 <FaPlus className="inline mr-2" />
@@ -286,9 +426,7 @@ function Dashboard() {
 
             <button
               onClick={() =>
-                navigate(
-                  "/create-task"
-                )
+                navigate("/create-task")
               }
               className="
                 bg-white/20
@@ -298,6 +436,8 @@ function Dashboard() {
                 py-3
                 rounded-2xl
                 font-semibold
+                hover:bg-white/30
+                transition
               "
             >
               <FaTasks className="inline mr-2" />
@@ -318,6 +458,8 @@ function Dashboard() {
                 py-3
                 rounded-2xl
                 font-semibold
+                hover:bg-white/30
+                transition
               "
             >
               <FaUpload className="inline mr-2" />
@@ -347,7 +489,9 @@ function Dashboard() {
         )}
       </div>
 
-      {/* HEADER */}
+      {/* =====================================
+          HEADER
+      ===================================== */}
 
       <div className="mb-10">
         <h1
@@ -373,7 +517,9 @@ function Dashboard() {
         </p>
       </div>
 
-      {/* STATS */}
+      {/* =====================================
+          STATS
+      ===================================== */}
 
       <div
         className="
@@ -396,6 +542,8 @@ function Dashboard() {
             enterprise-card
             p-8
             cursor-pointer
+            hover:shadow-xl
+            transition
           "
         >
           <div
@@ -447,6 +595,8 @@ function Dashboard() {
             enterprise-card
             p-8
             cursor-pointer
+            hover:shadow-xl
+            transition
           "
         >
           <div
@@ -583,7 +733,9 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* ANALYTICS */}
+      {/* =====================================
+          ANALYTICS
+      ===================================== */}
 
       <div
         className="
@@ -601,6 +753,7 @@ function Dashboard() {
           className="
             enterprise-card
             p-8
+            min-w-0
           "
         >
           <h2
@@ -613,38 +766,48 @@ function Dashboard() {
             Task Analytics
           </h2>
 
-          <div className="h-[350px]">
-            <ResponsiveContainer
-              width="100%"
-              height="100%"
-            >
-              <PieChart>
-                <Pie
-                  data={taskData}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={120}
-                  dataKey="value"
-                >
-                  {taskData.map(
-                    (entry, index) => (
-                      <Cell
-                        key={index}
-                        fill={
-                          COLORS[index]
-                        }
-                      />
-                    )
-                  )}
-                </Pie>
+          <div
+            className="
+              w-full
+              h-[350px]
+              min-h-[350px]
+              min-w-0
+            "
+          >
+            {taskData.length > 0 && (
+              <ResponsiveContainer
+                width="100%"
+                height="100%"
+              >
+                <PieChart>
+                  <Pie
+                    data={taskData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={120}
+                    dataKey="value"
+                    nameKey="name"
+                  >
+                    {taskData.map(
+                      (entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={
+                            COLORS[index]
+                          }
+                        />
+                      )
+                    )}
+                  </Pie>
 
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
 
-        {/* PROGRESS */}
+        {/* PROJECT COMPLETION */}
 
         <div
           className="
@@ -683,7 +846,9 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* RECENT ACTIVITIES */}
+      {/* =====================================
+          RECENT ACTIVITIES
+      ===================================== */}
 
       <div
         className="
@@ -720,35 +885,35 @@ function Dashboard() {
           {activities.length > 0 ? (
             activities
               .slice(0, 5)
-              .map(
-                (activity, index) => (
-                  <div
-                    key={index}
+              .map((activity, index) => (
+                <div
+                  key={
+                    activity.id || index
+                  }
+                  className="
+                    border
+                    rounded-2xl
+                    p-5
+                  "
+                >
+                  <h3
                     className="
-                      border
-                      rounded-2xl
-                      p-5
+                      font-bold
+                      text-lg
                     "
                   >
-                    <h3
-                      className="
-                        font-bold
-                        text-lg
-                      "
-                    >
-                      {activity.title}
-                    </h3>
+                    {activity.title}
+                  </h3>
 
-                    <p
-                      className="
-                        text-gray-500
-                      "
-                    >
-                      {activity.description}
-                    </p>
-                  </div>
-                )
-              )
+                  <p
+                    className="
+                      text-gray-500
+                    "
+                  >
+                    {activity.description}
+                  </p>
+                </div>
+              ))
           ) : (
             <p
               className="
@@ -761,7 +926,9 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* FLOATING BUTTON */}
+      {/* =====================================
+          FLOATING BUTTON
+      ===================================== */}
 
       {role === "ADMIN" && (
         <button
@@ -782,11 +949,14 @@ function Dashboard() {
             text-3xl
             shadow-2xl
             z-50
+            hover:bg-blue-700
+            transition
           "
         >
           +
         </button>
       )}
+
     </MainLayout>
   );
 }
