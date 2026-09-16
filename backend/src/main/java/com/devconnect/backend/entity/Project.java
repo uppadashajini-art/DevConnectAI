@@ -16,19 +16,23 @@ public class Project {
 
     private String techStack;
 
-    // NEW FIELDS
     private Integer totalTasks;
 
     private Integer completedTasks;
 
     private String deadline;
 
-    // USER EMAIL
+    private String priority;
+
+    private String status;
+
     private String userEmail;
 
+    // Default constructor
     public Project() {
     }
 
+    // Parameterized constructor
     public Project(
             String title,
             String description,
@@ -36,6 +40,8 @@ public class Project {
             Integer totalTasks,
             Integer completedTasks,
             String deadline,
+            String priority,
+            String status,
             String userEmail) {
 
         this.title = title;
@@ -44,6 +50,8 @@ public class Project {
         this.totalTasks = totalTasks;
         this.completedTasks = completedTasks;
         this.deadline = deadline;
+        this.priority = priority;
+        this.status = status;
         this.userEmail = userEmail;
     }
 
@@ -108,6 +116,24 @@ public class Project {
 
     public void setDeadline(String deadline) {
         this.deadline = deadline;
+    }
+
+    // PRIORITY
+    public String getPriority() {
+        return priority;
+    }
+
+    public void setPriority(String priority) {
+        this.priority = priority;
+    }
+
+    // STATUS
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     // USER EMAIL
