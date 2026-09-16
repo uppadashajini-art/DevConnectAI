@@ -23,135 +23,117 @@ function CreateTask() {
   // ROLE
   // =========================================
 
-  const role =
-    localStorage.getItem("role");
+  const role = localStorage.getItem("role");
 
   // =========================================
   // USER EMAIL
   // =========================================
 
-  const userEmail =
-    localStorage.getItem("email");
+  const userEmail = localStorage.getItem("email");
 
   // =========================================
   // STATES
   // =========================================
 
-  const [loading, setLoading] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const [projects, setProjects] =
-    useState([]);
+  const [projects, setProjects] = useState([]);
 
-  const [teamMembers, setTeamMembers] =
-    useState([]);
+  const [teamMembers, setTeamMembers] = useState([]);
 
   // =========================================
   // TASK STATE
   // =========================================
 
-  const [task, setTask] =
-    useState({
-
-      title: "",
-
-      description: "",
-
-      status: "Pending",
-
-      dueDate: "",
-
-      assignedTo: "",
-
-      userEmail: userEmail,
-
-      projectId: "",
-
-    });
+  const [task, setTask] = useState({
+    title: "",
+    description: "",
+    status: "Pending",
+    dueDate: "",
+    assignedTo: "",
+    userEmail: userEmail,
+    projectId: "",
+  });
 
   // =========================================
   // FETCH DATA
   // =========================================
 
   useEffect(() => {
-
     fetchProjects();
-
     fetchTeamMembers();
-
   }, []);
 
   // =========================================
   // FETCH PROJECTS
   // =========================================
 
-  const fetchProjects =
-    async () => {
+  const fetchProjects = async () => {
 
-      try {
+    try {
 
-        const response =
-          await axios.get(
-            "/projects"
-          );
+      const response = await axios.get("/projects");
 
-        setProjects(
-          response.data || []
-        );
+      console.log("PROJECTS FROM BACKEND:", response.data);
 
-      } catch (error) {
+      setProjects(response.data || []);
 
-        console.log(error);
+    } catch (error) {
 
-      }
+      console.error("PROJECT FETCH ERROR:", error);
 
-    };
+    }
+  };
 
   // =========================================
   // FETCH TEAM MEMBERS
   // =========================================
 
-  const fetchTeamMembers =
-    async () => {
+  const fetchTeamMembers = async () => {
 
-      try {
+    try {
 
-        const response =
-          await axios.get(
-            "/users"
-          );
+      const response = await axios.get("/users");
 
-        console.log(
-          response.data
+      console.log("USERS FROM BACKEND:", response.data);
+
+      // =====================================
+      // FILTER TEAM MEMBERS
+      // =====================================
+
+      const members = (response.data || []).filter((user) => {
+
+        const userRole =
+          String(user.role || "")
+            .trim()
+            .toUpperCase();
+
+        return (
+          userRole === "TEAM_MEMBER" ||
+          userRole === "TEAM MEMBER" ||
+          userRole === "MEMBER"
         );
 
-        // ONLY TEAM MEMBERS
+      });
 
-        const members =
-          response.data.filter(
-            (user) =>
+      console.log(
+        "TEAM MEMBERS AFTER FILTER:",
+        members
+      );
 
-              user.role ===
-              "TEAM_MEMBER"
-          );
+      setTeamMembers(members);
 
-        console.log(members);
+    } catch (error) {
 
-        setTeamMembers(
-          members || []
-        );
+      console.error(
+        "TEAM MEMBER FETCH ERROR:",
+        error
+      );
 
-      } catch (error) {
+      alert("Failed to Load Team Members");
 
-        console.log(error);
-
-        alert(
-          "Failed to Load Team Members"
-        );
-
-      }
-
-    };
+    }
+  };
 
   // =========================================
   // HANDLE CHANGE
@@ -160,12 +142,8 @@ function CreateTask() {
   const handleChange = (e) => {
 
     setTask({
-
       ...task,
-
-      [e.target.name]:
-        e.target.value,
-
+      [e.target.name]: e.target.value,
     });
 
   };
@@ -174,125 +152,173 @@ function CreateTask() {
   // HANDLE SUBMIT
   // =========================================
 
-  const handleSubmit =
-    async (e) => {
+  const handleSubmit = async (e) => {
 
-      e.preventDefault();
+    e.preventDefault();
 
-      try {
+    try {
 
-        setLoading(true);
+      setLoading(true);
 
-        const updatedTask = {
+      // =====================================
+      // VALIDATE PROJECT
+      // =====================================
 
-          ...task,
+      if (!task.projectId) {
 
-          projectId:
-            Number(
-              task.projectId
-            ),
-
-        };
-
-        console.log(updatedTask);
-
-        await axios.post(
-
-          "/tasks",
-
-          updatedTask
-
-        );
-
-        alert(
-          "Task Created Successfully"
-        );
-
-        navigate("/tasks");
-
-      } catch (error) {
-
-        console.log(error);
-
-        alert(
-          "Error Creating Task"
-        );
-
-      } finally {
+        alert("Please select a project");
 
         setLoading(false);
 
+        return;
       }
 
-    };
+      // =====================================
+      // VALIDATE TEAM MEMBER
+      // =====================================
+
+      if (!task.assignedTo) {
+
+        alert("Please select a team member");
+
+        setLoading(false);
+
+        return;
+      }
+
+      // =====================================
+      // PREPARE TASK
+      // =====================================
+
+      const updatedTask = {
+        ...task,
+
+        projectId: Number(task.projectId),
+
+        userEmail: userEmail,
+      };
+
+      console.log(
+        "TASK TO SEND:",
+        updatedTask
+      );
+
+      // =====================================
+      // CREATE TASK
+      // =====================================
+
+      await axios.post(
+        "/tasks",
+        updatedTask
+      );
+
+      alert("Task Created Successfully");
+
+      navigate("/tasks");
+
+    } catch (error) {
+
+      console.error(
+        "TASK CREATION ERROR:",
+        error
+      );
+
+      if (error.response) {
+
+        console.error(
+          "STATUS:",
+          error.response.status
+        );
+
+        console.error(
+          "DATA:",
+          error.response.data
+        );
+
+      }
+
+      alert("Error Creating Task");
+
+    } finally {
+
+      setLoading(false);
+
+    }
+
+  };
 
   // =========================================
   // BLOCK TEAM MEMBER
   // =========================================
 
   if (
-
     role !== "ADMIN" &&
-
     role !== "PROJECT_MANAGER"
-
   ) {
 
     return (
 
       <MainLayout>
 
-        <div className="
-          flex
-          justify-center
-          items-center
-          h-[80vh]
-        ">
+        <div
+          className="
+            flex
+            justify-center
+            items-center
+            h-[80vh]
+          "
+        >
 
-          <div className="
-            bg-white
-            rounded-3xl
-            shadow-xl
-            p-12
-            text-center
-            max-w-lg
-          ">
+          <div
+            className="
+              bg-white
+              rounded-3xl
+              shadow-xl
+              p-12
+              text-center
+              max-w-lg
+            "
+          >
 
-            <div className="
-              bg-red-100
-              text-red-600
-              w-24
-              h-24
-              rounded-full
-              flex
-              items-center
-              justify-center
-              mx-auto
-              mb-6
-            ">
+            <div
+              className="
+                bg-red-100
+                text-red-600
+                w-24
+                h-24
+                rounded-full
+                flex
+                items-center
+                justify-center
+                mx-auto
+                mb-6
+              "
+            >
 
-              <FaLock className="
-                text-4xl
-              " />
+              <FaLock className="text-4xl" />
 
             </div>
 
-            <h1 className="
-              text-4xl
-              font-bold
-              text-slate-900
-              mb-4
-            ">
+            <h1
+              className="
+                text-4xl
+                font-bold
+                text-slate-900
+                mb-4
+              "
+            >
 
               Access Denied
 
             </h1>
 
-            <p className="
-              text-gray-500
-              text-lg
-              mb-8
-            ">
+            <p
+              className="
+                text-gray-500
+                text-lg
+                mb-8
+              "
+            >
 
               Only Admins and
               Project Managers
@@ -302,9 +328,7 @@ function CreateTask() {
 
             <button
               onClick={() =>
-                navigate(
-                  "/dashboard"
-                )
+                navigate("/dashboard")
               }
               className="
                 bg-blue-600
@@ -332,16 +356,22 @@ function CreateTask() {
 
   }
 
+  // =========================================
+  // MAIN PAGE
+  // =========================================
+
   return (
 
     <MainLayout>
 
-      <div className="
-        flex
-        justify-center
-        items-center
-        py-10
-      ">
+      <div
+        className="
+          flex
+          justify-center
+          items-center
+          py-10
+        "
+      >
 
         <form
           onSubmit={handleSubmit}
@@ -357,45 +387,53 @@ function CreateTask() {
           "
         >
 
+          {/* ================================= */}
           {/* HEADER */}
+          {/* ================================= */}
 
-          <div className="
-            flex
-            items-center
-            gap-4
-            mb-10
-          ">
+          <div
+            className="
+              flex
+              items-center
+              gap-4
+              mb-10
+            "
+          >
 
-            <div className="
-              bg-blue-100
-              text-blue-600
-              p-5
-              rounded-3xl
-            ">
+            <div
+              className="
+                bg-blue-100
+                text-blue-600
+                p-5
+                rounded-3xl
+              "
+            >
 
-              <FaTasks className="
-                text-3xl
-              " />
+              <FaTasks className="text-3xl" />
 
             </div>
 
             <div>
 
-              <h1 className="
-                text-5xl
-                font-bold
-                text-slate-900
-              ">
+              <h1
+                className="
+                  text-5xl
+                  font-bold
+                  text-slate-900
+                "
+              >
 
                 Create Task
 
               </h1>
 
-              <p className="
-                text-gray-500
-                mt-2
-                text-lg
-              ">
+              <p
+                className="
+                  text-gray-500
+                  mt-2
+                  text-lg
+                "
+              >
 
                 Manage workflow efficiently
 
@@ -405,16 +443,20 @@ function CreateTask() {
 
           </div>
 
-          {/* TITLE */}
+          {/* ================================= */}
+          {/* TASK TITLE */}
+          {/* ================================= */}
 
           <div className="mb-6">
 
-            <label className="
-              block
-              mb-3
-              font-semibold
-              text-slate-700
-            ">
+            <label
+              className="
+                block
+                mb-3
+                font-semibold
+                text-slate-700
+              "
+            >
 
               Task Title
 
@@ -422,12 +464,14 @@ function CreateTask() {
 
             <div className="relative">
 
-              <FaTasks className="
-                absolute
-                left-4
-                top-5
-                text-gray-400
-              " />
+              <FaTasks
+                className="
+                  absolute
+                  left-4
+                  top-5
+                  text-gray-400
+                "
+              />
 
               <input
                 type="text"
@@ -453,16 +497,20 @@ function CreateTask() {
 
           </div>
 
+          {/* ================================= */}
           {/* DESCRIPTION */}
+          {/* ================================= */}
 
           <div className="mb-6">
 
-            <label className="
-              block
-              mb-3
-              font-semibold
-              text-slate-700
-            ">
+            <label
+              className="
+                block
+                mb-3
+                font-semibold
+                text-slate-700
+              "
+            >
 
               Description
 
@@ -470,12 +518,14 @@ function CreateTask() {
 
             <div className="relative">
 
-              <FaAlignLeft className="
-                absolute
-                left-4
-                top-5
-                text-gray-400
-              " />
+              <FaAlignLeft
+                className="
+                  absolute
+                  left-4
+                  top-5
+                  text-gray-400
+                "
+              />
 
               <textarea
                 name="description"
@@ -501,16 +551,20 @@ function CreateTask() {
 
           </div>
 
-          {/* PROJECT */}
+          {/* ================================= */}
+          {/* SELECT PROJECT */}
+          {/* ================================= */}
 
           <div className="mb-6">
 
-            <label className="
-              block
-              mb-3
-              font-semibold
-              text-slate-700
-            ">
+            <label
+              className="
+                block
+                mb-3
+                font-semibold
+                text-slate-700
+              "
+            >
 
               Select Project
 
@@ -518,12 +572,15 @@ function CreateTask() {
 
             <div className="relative">
 
-              <FaProjectDiagram className="
-                absolute
-                left-4
-                top-5
-                text-gray-400
-              " />
+              <FaProjectDiagram
+                className="
+                  absolute
+                  left-4
+                  top-5
+                  text-gray-400
+                  z-10
+                "
+              />
 
               <select
                 name="projectId"
@@ -547,22 +604,20 @@ function CreateTask() {
                   Choose Project
                 </option>
 
-                {
-                  projects.map(
-                    (project) => (
+                {projects.map(
+                  (project) => (
 
-                      <option
-                        key={project.id}
-                        value={project.id}
-                      >
+                    <option
+                      key={project.id}
+                      value={project.id}
+                    >
 
-                        {project.title}
+                      {project.title}
 
-                      </option>
+                    </option>
 
-                    )
                   )
-                }
+                )}
 
               </select>
 
@@ -570,16 +625,20 @@ function CreateTask() {
 
           </div>
 
+          {/* ================================= */}
           {/* STATUS */}
+          {/* ================================= */}
 
           <div className="mb-6">
 
-            <label className="
-              block
-              mb-3
-              font-semibold
-              text-slate-700
-            ">
+            <label
+              className="
+                block
+                mb-3
+                font-semibold
+                text-slate-700
+              "
+            >
 
               Status
 
@@ -618,16 +677,20 @@ function CreateTask() {
 
           </div>
 
+          {/* ================================= */}
           {/* ASSIGN TO */}
+          {/* ================================= */}
 
           <div className="mb-6">
 
-            <label className="
-              block
-              mb-3
-              font-semibold
-              text-slate-700
-            ">
+            <label
+              className="
+                block
+                mb-3
+                font-semibold
+                text-slate-700
+              "
+            >
 
               Assign To
 
@@ -635,13 +698,15 @@ function CreateTask() {
 
             <div className="relative">
 
-              <FaUser className="
-                absolute
-                left-4
-                top-5
-                text-gray-400
-                z-10
-              " />
+              <FaUser
+                className="
+                  absolute
+                  left-4
+                  top-5
+                  text-gray-400
+                  z-10
+                "
+              />
 
               <select
                 name="assignedTo"
@@ -665,43 +730,67 @@ function CreateTask() {
                   Select Team Member
                 </option>
 
-                {
-                  teamMembers.map(
-                    (member) => (
+                {teamMembers.map(
+                  (member) => (
 
-                      <option
-                        key={member.id}
-                        value={member.email}
-                      >
+                    <option
+                      key={member.id}
+                      value={member.email}
+                    >
 
-                        {member.name}
-                        {" "}
-                        (
-                        {member.email}
-                        )
+                      {member.name || "Unknown User"}
 
-                      </option>
+                      {" "}
 
-                    )
+                      (
+                      {member.email}
+                      )
+
+                    </option>
+
                   )
-                }
+                )}
 
               </select>
 
             </div>
 
+            {/* ================================= */}
+            {/* NO TEAM MEMBERS MESSAGE */}
+            {/* ================================= */}
+
+            {teamMembers.length === 0 && (
+
+              <p
+                className="
+                  text-red-500
+                  text-sm
+                  mt-2
+                "
+              >
+
+                No team members available.
+
+              </p>
+
+            )}
+
           </div>
 
+          {/* ================================= */}
           {/* DUE DATE */}
+          {/* ================================= */}
 
           <div className="mb-8">
 
-            <label className="
-              block
-              mb-3
-              font-semibold
-              text-slate-700
-            ">
+            <label
+              className="
+                block
+                mb-3
+                font-semibold
+                text-slate-700
+              "
+            >
 
               Due Date
 
@@ -709,12 +798,14 @@ function CreateTask() {
 
             <div className="relative">
 
-              <FaCalendarAlt className="
-                absolute
-                left-4
-                top-5
-                text-gray-400
-              " />
+              <FaCalendarAlt
+                className="
+                  absolute
+                  left-4
+                  top-5
+                  text-gray-400
+                "
+              />
 
               <input
                 type="date"
@@ -739,7 +830,9 @@ function CreateTask() {
 
           </div>
 
-          {/* SUBMIT BUTTON */}
+          {/* ================================= */}
+          {/* CREATE BUTTON */}
+          {/* ================================= */}
 
           <button
             type="submit"
@@ -759,10 +852,9 @@ function CreateTask() {
             "
           >
 
-            {
-              loading
-                ? "Creating Task..."
-                : "Create Task"
+            {loading
+              ? "Creating Task..."
+              : "Create Task"
             }
 
           </button>
@@ -774,7 +866,6 @@ function CreateTask() {
     </MainLayout>
 
   );
-
 }
 
 export default CreateTask;
